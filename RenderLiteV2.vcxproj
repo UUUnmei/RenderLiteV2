@@ -218,6 +218,7 @@
     <ClInclude Include="Window.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include=".gitignore" />
     <None Include="Buffer.inl" />
     <None Include="Pipeline.inl" />
   </ItemGroup>

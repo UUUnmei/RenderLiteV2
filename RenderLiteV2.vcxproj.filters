@@ -157,5 +157,6 @@
     <None Include="Pipeline.inl">
       <Filter>头文件</Filter>
     </None>
+    <None Include=".gitignore" />
   </ItemGroup>
 </Project>
