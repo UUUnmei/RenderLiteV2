@@ -2,32 +2,56 @@
 #include "OrbitCamera.h"
 
 CubeScene::CubeScene(uint32_t w, uint32_t h)
-	: SceneBase(w, h), pipe(w, h)
+	: context(std::make_shared<SceneContext>(w, h))
 {
+	width = w;
+	height = h;
 }
 
 const unsigned char* CubeScene::GetFrameBuffer() const
 {
-	return pipe.GetRawFrameBufferPointer();
+	return context->GetFrameBufferPointer().Get();
 }
 
 void CubeScene::Init()
 {
-	std::shared_ptr<OrbitCamera> cam = std::make_shared<OrbitCamera>(800, 600, glm::radians(45.0f), 800.0 / 600.0, 0.1, 1000.f);
-	AddCamera( cam );
+	std::shared_ptr<OrbitCamera> cam = std::make_shared<OrbitCamera>(width, height, glm::radians(45.0f), width * 1.0f / height, 0.1, 1000.f);
+	context->AddCamera( cam );
 
-	AddModel("obj/cube.obj");
+	context->AddModel("obj/cube.obj")
+		.BindModelMat(glm::mat4(5.0f));
+	context->AddModel("obj/cube.obj")
+		.BindModelTex("obj/pet.png")
+		.BindModelMat(glm::translate(glm::mat4(1.0f), glm::vec3(3.0f, 0.0f, 0.0f)));
+
+	nrender.BindContext(context);
+	drender.BindContext(context);
+
 }
 
 void CubeScene::Draw()
 {
-	pipe.BeginFrame();
-	pipe.BindContext(context);
-	for (size_t i = 0; i < context->models.size(); ++i) {
-		const auto& model = context->models[i];
-		pipe.BindModelMat(model->model_matrix);
-		for (size_t j = 0; j < model->meshes.size(); ++j) {
-			pipe.DrawMesh(model->meshes[j], i, j);
-		}
-	}
+
+//init 
+// 	Add*
+//	renderer1.bind(context);
+//	renderer2.bind(context);
+//	renderer3.bind(context);
+//
+//update
+//  Clear()
+// 	renderer1.draw(0);
+//	renderer1.draw(1);
+//	renderer2.draw(2);
+//	renderer3.draw(3);
+
+	context->ClearBuffer();
+	nrender.Draw(0);
+	drender.Draw(1);
+
+}
+
+OrbitCamera& CubeScene::GetCamera()
+{
+	return *context->camera;
 }

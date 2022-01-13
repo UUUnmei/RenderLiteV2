@@ -1,9 +1,6 @@
 #pragma once
 
-#include "DepthBuffer.h"
-#include "FrameBuffer.h"
 #include "Mesh.h"
-
 
 #include <memory>
 #include <vector>
@@ -24,15 +21,12 @@ class Pipeline
 {
 
 	using VSOut = typename Shader::VSOut;  //typedef typename Shader::VSOut VSOut;
-	
 private:
-	std::unique_ptr<DepthBuffer> depthbuffer;
-	std::unique_ptr<FrameBuffer> framebuffer;
 	Shader shader;
+	std::shared_ptr<SceneContext> pContext{ nullptr };
 public:
-
-	Pipeline(uint32_t w, uint32_t h);
-	const unsigned char* GetRawFrameBufferPointer() const;
+	Pipeline() = default;
+	
 
 private:
 	// 调用vertex shader
@@ -49,6 +43,7 @@ private:
 	void PostProcessTriangle(const VSOut& v0, const VSOut& v1, const VSOut& v2);
 	// 三角形光栅化，调用pixel shader
 	void RasterizeTriangle(const VSOut& v0, const VSOut& v1, const VSOut& v2);
+	void DrawLine(const int x0, const int y0, const int x1, const int y1, const glm::vec4& color);
 
 
 	// 透视除法，并变换到到屏幕空间
@@ -61,13 +56,12 @@ private:
 	bool CVVCheck(const glm::vec4& v);
 	// TODO 齐次裁剪
 
-	int current_model_id;
-	int current_mesh_id;
+	uint32_t current_model_id;
+	uint32_t current_mesh_id;
 public:
-	void BeginFrame();
-	void DrawMesh(const Mesh& mesh, int modelId, int meshId);
+	void DrawMesh(const Mesh& mesh);
+	void Draw(uint32_t model_id);
 	void BindContext(std::shared_ptr<SceneContext> context);
-	void BindModelMat(const glm::mat4& mat);
 };
 
 

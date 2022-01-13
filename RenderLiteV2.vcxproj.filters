@@ -69,13 +69,7 @@
     <ClCompile Include="VertexShaderMatHelper.cpp">
       <Filter>Shaders</Filter>
     </ClCompile>
-    <ClCompile Include="SceneBase.cpp">
-      <Filter>Scenes</Filter>
-    </ClCompile>
     <ClCompile Include="CubeScene.cpp">
-      <Filter>Scenes</Filter>
-    </ClCompile>
-    <ClCompile Include="NanosuitScene.cpp">
       <Filter>Scenes</Filter>
     </ClCompile>
   </ItemGroup>
@@ -144,9 +138,6 @@
       <Filter>Scenes</Filter>
     </ClInclude>
     <ClInclude Include="CubeScene.h">
-      <Filter>Scenes</Filter>
-    </ClInclude>
-    <ClInclude Include="NanosuitScene.h">
       <Filter>Scenes</Filter>
     </ClInclude>
   </ItemGroup>

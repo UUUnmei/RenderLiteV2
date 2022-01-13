@@ -4,18 +4,6 @@
 
 #include <algorithm>
 
-template<class Shader>
-inline Pipeline<Shader>::Pipeline(uint32_t w, uint32_t h)
-{
-	framebuffer = std::make_unique<FrameBuffer>(w, h);
-	depthbuffer = std::make_unique<DepthBuffer>(w, h);
-}
-
-template<class Shader>
-inline const unsigned char* Pipeline<Shader>::GetRawFrameBufferPointer() const
-{
-	return framebuffer->Get();
-}
 
 template<class Shader>
 inline void Pipeline<Shader>::ProcessVertices(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices)
@@ -33,12 +21,12 @@ inline void Pipeline<Shader>::AssembleTriangles(const std::vector<VSOut>& vertic
 		const auto& v0 = vertices[indices[i + 0]];
 		const auto& v1 = vertices[indices[i + 1]];
 		const auto& v2 = vertices[indices[i + 2]];
+		//std::cout << v0.proj_pos.x << ' ' << v0.proj_pos.y << ' ' << v0.proj_pos.z << ' ' << v0.proj_pos.w << '\n';
 
 		// 这里是在mvp后直接剔除，而不是在屏幕空间
 		if (FaceCullCW(v0.proj_pos, v1.proj_pos, v2.proj_pos)) {
 			ProcessTriangle(v0, v1, v2);
-		}
-		
+		}		
 	}
 }
 
@@ -58,6 +46,10 @@ inline void Pipeline<Shader>::PostProcessTriangle(const VSOut& v0, const VSOut& 
 	VSOut vv1 = DivideAndTransform(v1);
 	VSOut vv2 = DivideAndTransform(v2);
 
+	//static const glm::vec4 color(1.0f);
+	//DrawLine(vv0.proj_pos.x, vv0.proj_pos.y, vv1.proj_pos.x, vv1.proj_pos.y, color);
+	//DrawLine(vv1.proj_pos.x, vv1.proj_pos.y, vv2.proj_pos.x, vv2.proj_pos.y, color);
+	//DrawLine(vv2.proj_pos.x, vv2.proj_pos.y, vv0.proj_pos.x, vv0.proj_pos.y, color);
 	RasterizeTriangle(vv0, vv1, vv2);
 }
 
@@ -74,9 +66,9 @@ inline void Pipeline<Shader>::RasterizeTriangle(const VSOut& v0, const VSOut& v1
 	int miny = std::floor(std::min({ vv0.y, vv1.y, vv2.y }));
 	int maxy = std::ceil(std::max({ vv0.y, vv1.y, vv2.y }));
 	minx = std::max(0, minx - 1);
-	maxx = std::min(framebuffer->GetWidth() - 1, maxx + 1);
+	maxx = std::min(pContext->GetFrameBufferPointer().GetWidth() - 1, maxx + 1);
 	miny = std::max(0, miny);
-	maxy = std::min(framebuffer->GetHeight() - 1, maxy + 1);
+	maxy = std::min(pContext->GetFrameBufferPointer().GetHeight() - 1, maxy + 1);
 
 	// 求解重心坐标 Barycentric
 	// reference  https://zhuanlan.zhihu.com/p/337296743
@@ -99,7 +91,7 @@ inline void Pipeline<Shader>::RasterizeTriangle(const VSOut& v0, const VSOut& v1
 				float Z = v0.proj_pos.z * bary.x + v1.proj_pos.z * bary.y + v2.proj_pos.z * bary.z;
 				
 				//深度测试
-				if ( depthbuffer->TryUpdate(i, j, Z) ) {
+				if ( pContext->GetDepthBufferPointer().TryUpdate(i, j, Z) ) {
 					bary.x *= v0.proj_pos.w;  // 注意这里w是1/w
 					bary.y *= v1.proj_pos.w;
 					bary.z *= v2.proj_pos.w;
@@ -121,7 +113,7 @@ inline void Pipeline<Shader>::RasterizeTriangle(const VSOut& v0, const VSOut& v1
 					// 如果DivideAndTransform把其他属性也除w 那这里就要恢复（在插值后）
 					//const float w = 1.0f / v2f.proj_pos.w;   
 					//v2f *= w;
-					framebuffer->write(i, j, shader.ps(v2f, current_model_id, current_mesh_id));
+					pContext->GetFrameBufferPointer().write(i, j, shader.ps(v2f, current_model_id, current_mesh_id));
 				}
 			}
 		}
@@ -130,7 +122,7 @@ inline void Pipeline<Shader>::RasterizeTriangle(const VSOut& v0, const VSOut& v1
 
 
 // 关于下面这个函数的返回值写法，可参见C++ Primer（第五版中文）P593 -- 使用类的类型成员
-// 在编译期，编译期还不知道 T::sth是个类型 还是是 T中的某个static成员
+// 在编译期，编译器还不知道 T::sth是个类型 还是是 T中的某个static成员
 // 所以 显式typename的目的就是告诉编译器 T::sth 是个类型 而不是 T中的某个static成员 ！
 template<class Shader>
 inline typename Pipeline<Shader>::VSOut    // 这个返回类型的写法有必要单拎出来看看。。。
@@ -141,8 +133,8 @@ Pipeline<Shader>::DivideAndTransform(const VSOut& v)
 	float invW = 1.0f / ret.proj_pos.w;
 	ret.proj_pos *= invW;  // ！shader中对于VSOut要根据需要重载*=，（也包含了坐标齐次化）
 
-	ret.proj_pos.x = (1.0f + ret.proj_pos.x) * framebuffer->GetWidth() * 0.5f;
-	ret.proj_pos.y = (1.0f - ret.proj_pos.y) * framebuffer->GetHeight() * 0.5f;
+	ret.proj_pos.x = (1.0f + ret.proj_pos.x) * pContext->GetFrameBufferPointer().GetWidth() * 0.5f;
+	ret.proj_pos.y = (1.0f - ret.proj_pos.y) * pContext->GetFrameBufferPointer().GetHeight() * 0.5f;
 	//  -1 <= z <= 1 
 
 	// 把 1/w 放在w处，用于插值时恢复
@@ -189,32 +181,77 @@ inline bool Pipeline<Shader>::CVVCheck(const glm::vec4& v)
 }
 
 template<class Shader>
-inline void Pipeline<Shader>::BeginFrame()
-{
-	static const glm::vec4 color(0.2f, 0.2f, 0.8f, 1.0f);
-	framebuffer->Clear(color);
-	depthbuffer->clear();
-}
-
-template<class Shader>
-inline void Pipeline<Shader>::BindModelMat(const glm::mat4& mat)
-{
-	shader.vs.BindMatModel(mat);
-}
-
-template<class Shader>
-inline void Pipeline<Shader>::DrawMesh(const Mesh& mesh, int modelId, int meshId)
+inline void Pipeline<Shader>::DrawMesh(const Mesh& mesh)
 {	
-	current_model_id = modelId;
-	current_mesh_id = meshId;
 	ProcessVertices(mesh.vertices, mesh.indices);
+}
+
+template<class Shader>
+inline void Pipeline<Shader>::Draw(uint32_t model_id)
+{
+	shader.vs.BindAllMat(
+		pContext->models[model_id]->model_matrix,
+		pContext->camera->GetView(),
+		pContext->camera->GetProj()
+	);
+
+	current_model_id = model_id;
+	const auto& model = pContext->models[model_id];
+	for (size_t i = 0; i < model->meshes.size(); ++i) {
+		current_mesh_id = i;
+		DrawMesh(model->meshes[i]);
+	}	
 }
 
 template<class Shader>
 inline void Pipeline<Shader>::BindContext(std::shared_ptr<SceneContext> context)
 {
-	shader.vs.BindMatView(context->camera->GetView());
-	shader.vs.BindMatProj(context->camera->GetProj());
 	shader.ps.pContext = context;
+	pContext = context;
 }
 
+template<class Shader>
+inline void Pipeline<Shader>::DrawLine(const int x0, const int y0, const int x1, const int y1, const glm::vec4& color)
+{
+
+	int dx = x1 - x0;
+	int dy = y1 - y0;
+	int dLong = abs(dx);
+	int dShort = abs(dy);
+	int offsetLong = dx > 0 ? 1 : -1;
+	int offsetShort = dy > 0 ? 1 : -1;
+	bool f = true;
+	if (dLong < dShort)
+	{
+		f = false;
+		std::swap(dShort, dLong);
+		std::swap(offsetShort, offsetLong);
+	}
+	int error = dShort - dLong / 2;
+	int nx = x0, ny = y0;
+	const int offset[] = { 0, offsetShort };
+	const int abs_d[] = { dShort, dShort - dLong };
+	if (f) {
+		// 其实改的是这个，但这么写性能似乎比现在的写法慢一些
+		//	(f ? nx : ny) += offsetLong;
+		//	(f ? ny : nx) += offset[errorIsTooBig];
+		for (int i = 0; i <= dLong; ++i)
+		{
+			pContext->GetFrameBufferPointer().write(nx, ny, color);
+			const int errorIsTooBig = error >= 0;
+			nx += offsetLong;
+			ny += offset[errorIsTooBig];
+			error += abs_d[errorIsTooBig];
+		}
+	}
+	else {
+		for (int i = 0; i <= dLong; ++i)
+		{
+			pContext->GetFrameBufferPointer().write(nx, ny, color);
+			const int errorIsTooBig = error >= 0;
+			ny += offsetLong;
+			nx += offset[errorIsTooBig];
+			error += abs_d[errorIsTooBig];
+		}
+	}
+}

@@ -172,8 +172,6 @@
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="CubeScene.cpp" />
     <ClCompile Include="DepthBuffer.cpp" />
-    <ClCompile Include="NanosuitScene.cpp" />
-    <ClCompile Include="SceneBase.cpp" />
     <ClCompile Include="SceneContext.cpp" />
     <ClCompile Include="FrameBuffer.cpp" />
     <ClCompile Include="glad.c" />
@@ -194,7 +192,6 @@
     <ClInclude Include="Buffer.h" />
     <ClInclude Include="CubeScene.h" />
     <ClInclude Include="DepthBuffer.h" />
-    <ClInclude Include="NanosuitScene.h" />
     <ClInclude Include="Pipeline.h" />
     <ClInclude Include="SceneBase.h" />
     <ClInclude Include="SceneContext.h" />

@@ -17,5 +17,6 @@ public:
 	void BindMatModel(const glm::mat4& mat);
 	void BindMatView(const glm::mat4& mat);
 	void BindMatProj(const glm::mat4& mat);
+	void BindAllMat(const glm::mat4& m, const glm::mat4& v, const glm::mat4& p);
 };
 
