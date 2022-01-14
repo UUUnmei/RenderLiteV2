@@ -1,5 +1,8 @@
 #pragma once
-#include "OrbitCamera.h"
+
+#include <cstdint>
+
+class OrbitCamera;
 
 class SceneBase
 {

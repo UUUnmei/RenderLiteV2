@@ -1,6 +1,7 @@
 #pragma once
 
 #include "SceneBase.h"
+#include "OrbitCamera.h"
 #include "NormalShader.hpp"
 #include "DiffuseShader.hpp"
 #include "Pipeline.h"

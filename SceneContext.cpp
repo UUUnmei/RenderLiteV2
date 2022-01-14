@@ -23,7 +23,7 @@ void SceneContext::AddCamera(std::shared_ptr<OrbitCamera> cam)
 void SceneContext::ClearBuffer(const glm::vec4& bg)
 {
 	framebuffer->Clear(bg);
-	depthbuffer->clear();
+	depthbuffer->Clear();
 }
 
 FrameBuffer& SceneContext::GetFrameBufferPointer() noexcept

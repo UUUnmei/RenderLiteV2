@@ -32,7 +32,7 @@ bool DepthBuffer::TryUpdate(uint32_t x, uint32_t y, float newZ)
     return false;
 }
 
-void DepthBuffer::clear()
+void DepthBuffer::Clear()
 {
     std::fill(data, data + length, std::numeric_limits<float>::max());
 

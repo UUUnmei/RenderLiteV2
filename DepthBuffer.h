@@ -17,6 +17,6 @@ public:
 	const int GetHeight() const noexcept;
 	
 	bool TryUpdate(uint32_t x, uint32_t y, float newZ);
-	void clear();
+	void Clear();
 };
 
