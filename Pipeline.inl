@@ -24,7 +24,8 @@ inline void Pipeline<Shader>::AssembleTriangles(const std::vector<VSOut>& vertic
 		//std::cout << v0.proj_pos.x << ' ' << v0.proj_pos.y << ' ' << v0.proj_pos.z << ' ' << v0.proj_pos.w << '\n';
 
 		// 这里是在mvp后直接剔除，而不是在屏幕空间
-		if (FaceCullCW(v0.proj_pos, v1.proj_pos, v2.proj_pos)) {
+		if (config.draw_mode == ConfigParams::DrawMode::WireFrame
+		|| FaceCullCW(v0.proj_pos, v1.proj_pos, v2.proj_pos)) {
 			ProcessTriangle(v0, v1, v2);
 		}		
 	}
@@ -46,11 +47,16 @@ inline void Pipeline<Shader>::PostProcessTriangle(const VSOut& v0, const VSOut& 
 	VSOut vv1 = DivideAndTransform(v1);
 	VSOut vv2 = DivideAndTransform(v2);
 
-	//static const glm::vec4 color(1.0f);
-	//DrawLine(vv0.proj_pos.x, vv0.proj_pos.y, vv1.proj_pos.x, vv1.proj_pos.y, color);
-	//DrawLine(vv1.proj_pos.x, vv1.proj_pos.y, vv2.proj_pos.x, vv2.proj_pos.y, color);
-	//DrawLine(vv2.proj_pos.x, vv2.proj_pos.y, vv0.proj_pos.x, vv0.proj_pos.y, color);
-	RasterizeTriangle(vv0, vv1, vv2);
+	if (config.draw_mode == ConfigParams::DrawMode::WireFrame) {
+		static const glm::vec4 color(1.0f);
+		DrawLine(vv0.proj_pos.x, vv0.proj_pos.y, vv1.proj_pos.x, vv1.proj_pos.y, color);
+		DrawLine(vv1.proj_pos.x, vv1.proj_pos.y, vv2.proj_pos.x, vv2.proj_pos.y, color);
+		DrawLine(vv2.proj_pos.x, vv2.proj_pos.y, vv0.proj_pos.x, vv0.proj_pos.y, color);
+	}
+	else {
+		RasterizeTriangle(vv0, vv1, vv2);
+	}
+	
 }
 
 
@@ -201,6 +207,12 @@ inline void Pipeline<Shader>::Draw(uint32_t model_id)
 		current_mesh_id = i;
 		DrawMesh(model->meshes[i]);
 	}	
+}
+
+template<class Shader>
+inline void Pipeline<Shader>::SetConfig(const PipelineConfig& cfg)
+{
+	config = cfg;
 }
 
 template<class Shader>

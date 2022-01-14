@@ -24,8 +24,12 @@ void CubeScene::Init()
 		.BindModelTex("obj/pet.png")
 		.BindModelMat(glm::translate(glm::mat4(1.0f), glm::vec3(3.0f, 0.0f, 0.0f)));
 
+	PipelineConfig cfg;
+	cfg.draw_mode = ConfigParams::DrawMode::WireFrame;
+
 	nrender.BindContext(context);
 	drender.BindContext(context);
+	drender.SetConfig(cfg);
 
 }
 

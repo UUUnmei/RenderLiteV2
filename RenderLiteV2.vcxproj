@@ -193,6 +193,7 @@
     <ClInclude Include="CubeScene.h" />
     <ClInclude Include="DepthBuffer.h" />
     <ClInclude Include="Pipeline.h" />
+    <ClInclude Include="PipelineConfig.h" />
     <ClInclude Include="SceneBase.h" />
     <ClInclude Include="SceneContext.h" />
     <ClInclude Include="FrameBuffer.h" />

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Mesh.h"
+#include "PipelineConfig.h"
 
 #include <memory>
 #include <vector>
@@ -25,6 +26,8 @@ private:
 	Shader shader;
 	std::shared_ptr<SceneContext> pContext{ nullptr };
 public:
+	PipelineConfig config;
+
 	Pipeline() = default;
 	
 
@@ -56,12 +59,13 @@ private:
 	bool CVVCheck(const glm::vec4& v);
 	// TODO Æë´Î²Ã¼ô
 
-	uint32_t current_model_id;
-	uint32_t current_mesh_id;
+	uint32_t current_model_id{ 0 };
+	uint32_t current_mesh_id{ 0 };
 public:
 	void DrawMesh(const Mesh& mesh);
 	void Draw(uint32_t model_id);
 	void BindContext(std::shared_ptr<SceneContext> context);
+	void SetConfig(const PipelineConfig& cfg);
 };
 
 

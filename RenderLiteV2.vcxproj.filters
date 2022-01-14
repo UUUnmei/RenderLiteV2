@@ -140,6 +140,9 @@
     <ClInclude Include="CubeScene.h">
       <Filter>Scenes</Filter>
     </ClInclude>
+    <ClInclude Include="PipelineConfig.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Buffer.inl">
