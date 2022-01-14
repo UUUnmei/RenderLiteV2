@@ -52,6 +52,8 @@ void CubeScene::Draw()
 	context->ClearBuffer();
 	nrender.Draw(0);
 	drender.Draw(1);
+	
+	
 
 }
 

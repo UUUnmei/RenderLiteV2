@@ -25,7 +25,9 @@ inline void Pipeline<Shader>::AssembleTriangles(const std::vector<VSOut>& vertic
 
 		// 这里是在mvp后直接剔除，而不是在屏幕空间
 		if (config.draw_mode == ConfigParams::DrawMode::WireFrame
-		|| FaceCullCW(v0.proj_pos, v1.proj_pos, v2.proj_pos)) {
+		|| (config.fc_order == ConfigParams::FaceCullOrder::CCW && FaceCullCCW(v0.proj_pos, v1.proj_pos, v2.proj_pos))
+		|| (config.fc_order == ConfigParams::FaceCullOrder::CW && FaceCullCW(v0.proj_pos, v1.proj_pos, v2.proj_pos))
+		) {
 			ProcessTriangle(v0, v1, v2);
 		}		
 	}
@@ -161,10 +163,10 @@ template<class Shader>
 inline bool Pipeline<Shader>::FaceCullCCW(const glm::vec4& v0, const glm::vec4& v1, const glm::vec4& v2)
 {
 	glm::vec4 eye(0.0f, 0.0f, 0.0f, 1.0f);  // view变换后视线在原点
-	eye = shader.vs.proj * eye;	// 做投影变换
+	eye = shader.vs.proj * eye;	// 做投影变换  由于perspective矩阵，变换后eye.z < 0 
 	glm::vec4 cross = Cross(v1 - v0, v2 - v0);
 	float res = glm::dot(cross, v0 - eye);
-	return res <= 0.0f;
+	return res >= 0.0f;
 }
 
 template<class Shader>
