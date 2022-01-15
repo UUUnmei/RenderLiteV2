@@ -192,6 +192,10 @@
     <ClInclude Include="Buffer.h" />
     <ClInclude Include="CubeScene.h" />
     <ClInclude Include="DepthBuffer.h" />
+    <ClInclude Include="PhongShader.hpp">
+      <SubType>
+      </SubType>
+    </ClInclude>
     <ClInclude Include="Pipeline.h" />
     <ClInclude Include="PipelineConfig.h" />
     <ClInclude Include="SceneBase.h" />

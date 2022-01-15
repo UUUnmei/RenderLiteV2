@@ -143,6 +143,9 @@
     <ClInclude Include="PipelineConfig.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="PhongShader.hpp">
+      <Filter>Shaders</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Buffer.inl">
