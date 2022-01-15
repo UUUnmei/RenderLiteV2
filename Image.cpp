@@ -13,10 +13,10 @@ Image::Image()
 Image::Image(const char* file)
 	: Buffer()
 { 
-	data = stbi_load(file, &width, &height, &bpp, 4);
+	//data = stbi_load(file, &width, &height, &bpp, 4); // FAIL to make sure bpp==4
+	data = stbi_load(file, &width, &height, &bpp, 0);
 	length = width * height * bpp;
 	assert(length == (uint64_t)length); // 应该不会超32位的范围，在这检测其实好像有点晚了。。
-	assert(bpp == 4);
 	
 	std::cout << "[IMAGE] buffer allocate length: " << length << '\n';
 }
@@ -42,7 +42,7 @@ bool Image::read(uint32_t x, uint32_t y, glm::vec4& color)
 	unsigned char cr = data[p + 0];
 	unsigned char cg = data[p + 1];
 	unsigned char cb = data[p + 2];
-	unsigned char ca = data[p + 3];
+	unsigned char ca = bpp == 4 ? data[p + 3] : 0xFF;
 	color.r = (unsigned int)cr / 255.0f;
 	color.g = (unsigned int)cg / 255.0f;
 	color.b = (unsigned int)cb / 255.0f;
@@ -59,7 +59,8 @@ bool Image::write(uint32_t x, uint32_t y, const glm::vec4& color)
 	data[p + 0] = (unsigned int)(color.r * 255.0f);
 	data[p + 1] = (unsigned int)(color.g * 255.0f);
 	data[p + 2] = (unsigned int)(color.b * 255.0f);
-	data[p + 3] = (unsigned int)(color.a * 255.0f);
+	if(bpp == 4)
+		data[p + 3] = (unsigned int)(color.a * 255.0f);
 	return true;
 }
 
