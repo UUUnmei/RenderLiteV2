@@ -11,6 +11,7 @@ public:
 	uint32_t width;
 	uint32_t height;
 
+	virtual ~SceneBase() = default;
 	virtual OrbitCamera& GetCamera() = 0;
 	virtual const unsigned char* GetFrameBuffer() const = 0;
 	virtual void Init() = 0;
