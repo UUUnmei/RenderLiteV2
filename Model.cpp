@@ -76,8 +76,14 @@ void Model::ParseMaterial(const aiScene* scene)
 	for (unsigned int i = 0; i < scene->mNumMaterials; ++i) {
 		auto& material = scene->mMaterials[i];
 		std::shared_ptr<Material> our_mat = std::make_shared<Material>();
+
+		LoadParams(our_mat, ColorType::AMBIENT, material);
+		LoadParams(our_mat, ColorType::DIFFUSE, material);
+		LoadParams(our_mat, ColorType::SPECULAR, material);
+		
 		// 加载这个material对应的不同种类的texture 见 aiTextureType
 		LoadTypeTexture(our_mat, aiTextureType_DIFFUSE, material);
+		LoadTypeTexture(our_mat, aiTextureType_SPECULAR, material);
 		// TODO
 		materials[i] = our_mat;
 	}
@@ -103,6 +109,37 @@ void Model::LoadTypeTexture(std::shared_ptr<Material> our_mat, aiTextureType typ
 		
 		our_mat->Set(type, std::make_shared<Texture2D>(tex));  // 给material和texture建立联系
 	}
+}
+
+void Model::LoadParams(std::shared_ptr<Material> our_mat, ColorType type, aiMaterial* material)
+{
+	aiColor3D ret;
+	switch (type)
+	{
+	case ColorType::AMBIENT:
+		material->Get(AI_MATKEY_COLOR_AMBIENT, ret);
+		our_mat->Ka.r = ret.r;
+		our_mat->Ka.g = ret.g;
+		our_mat->Ka.b = ret.b;
+		break;
+	case ColorType::DIFFUSE:
+		material->Get(AI_MATKEY_COLOR_DIFFUSE, ret);
+		our_mat->Kd.r = ret.r;
+		our_mat->Kd.g = ret.g;
+		our_mat->Kd.b = ret.b;
+		break;
+	case ColorType::SPECULAR:
+		material->Get(AI_MATKEY_COLOR_SPECULAR, ret);
+		our_mat->Ks.r = ret.r;
+		our_mat->Ks.g = ret.g;
+		our_mat->Ks.b = ret.b;
+		break;
+	default:
+		std::cout << "Unknown Type\n";
+		assert(0);
+		break;
+	}
+	
 }
 
 Model& Model::BindModelMat(const glm::mat4& mat)

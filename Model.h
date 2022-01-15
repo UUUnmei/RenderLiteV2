@@ -30,6 +30,7 @@ private:
 	void ParseMesh(aiMesh* mesh, const aiScene* scene);
 	void ParseMaterial(const aiScene* scene);
 	void LoadTypeTexture(std::shared_ptr<Material> our_mat, aiTextureType type, aiMaterial* material);
+	void LoadParams(std::shared_ptr<Material> our_mat, ColorType type, aiMaterial* material);
 public:
 	Model& BindModelMat(const glm::mat4& mat);
 	// 对于这个模型所有mesh都用这个tex，暂时只考虑diffuse
