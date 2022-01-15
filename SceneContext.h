@@ -14,6 +14,7 @@ class SceneContext
 	
 public: 
 	std::shared_ptr<OrbitCamera> camera;
+	glm::vec3 camera_pos_cache; // inorder to call GetCameraPosition "only once every frame" instead of "every (shaded)pixel of every frame"
 	std::vector<std::unique_ptr<Model>> models;
 
 public:

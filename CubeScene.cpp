@@ -34,7 +34,7 @@ void CubeScene::Init()
 void CubeScene::Draw()
 {
 	context->ClearBuffer();
-
+	context->camera_pos_cache = context->camera->GetCameraPosition();
 	prender.Draw(0);
 	
 	

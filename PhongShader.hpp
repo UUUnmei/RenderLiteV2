@@ -88,7 +88,7 @@ public:
 		{
 			glm::vec3 light_pos(20.0f);
 			glm::vec3 light_intensity(700.0f);
-			glm::vec3 camera_pos = pContext->camera->GetCameraPosition();
+			glm::vec3 camera_pos = pContext->camera_pos_cache;
 			glm::vec3 light_dir = glm::normalize(light_pos - v.world_pos);
 			float d = glm::length(light_pos - v.world_pos);
 			light_intensity /= d * d;
