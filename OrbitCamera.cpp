@@ -97,11 +97,9 @@ void OrbitCamera::OnScrollChanged(double x, double y)
 {
 	// 一般好像x没啥用，滚轮上滚一个单位y=1.下滚一个单位y=-1
 	//std::cout << x << ' ' << y << '\n';
-	static int i = 0;
+	int i = y == 1 ? 1 : -1;
 
-	i = y == 1 ? i + 1 : i - 1;
-
-	distance = std::pow(0.95f, i);
+	distance *= std::pow(0.95f, i);
 }
 
 
