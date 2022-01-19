@@ -157,6 +157,7 @@ void Application::SetCallBacks()
 		scene->GetCamera().OnMousePositionChanged(x, y);
 		});
 	window->AddOnKeyChanged([this](int key, int scancode, int action, int mode) {
+		scene->OnKeyChanged(key, scancode, action, mode);
 		scene->GetCamera().OnKeyChanged(key, scancode, action, mode);
 		});
 	window->AddOnMouseButtonChanged([this](int button, int action, int mode) {

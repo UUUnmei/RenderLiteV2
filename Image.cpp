@@ -3,6 +3,9 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
+
 #include <cassert>
 #include <iostream>
 
@@ -62,6 +65,11 @@ bool Image::write(uint32_t x, uint32_t y, const glm::vec4& color)
 	if(bpp == 4)
 		data[p + 3] = (unsigned int)(color.a * 255.0f);
 	return true;
+}
+
+void Image::Dump(const char* outputname, int w, int h, int bpp, const unsigned char* data)
+{
+	stbi_write_png(outputname, w, h, bpp, data, 0);
 }
 
 

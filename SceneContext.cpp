@@ -1,7 +1,7 @@
 #include "SceneContext.h"
 
 SceneContext::SceneContext(uint32_t w, uint32_t h)
-	: camera(nullptr)
+	: camera(nullptr), light(nullptr), shadow_map(nullptr)
 {
 	framebuffer = std::make_unique<FrameBuffer>(w, h);
 	depthbuffer = std::make_unique<DepthBuffer>(w, h);
@@ -52,18 +52,49 @@ void SceneContext::AddCamera(std::shared_ptr<OrbitCamera> cam)
 	camera = cam;
 }
 
+void SceneContext::AddLight(std::shared_ptr<DirectionalLight> L)
+{
+	light = L;
+}
+
+void SceneContext::EnableShadowMap()
+{
+	shadow_map = std::make_unique<FrameBuffer>(framebuffer->GetWidth(), framebuffer->GetHeight());
+}
+
 void SceneContext::ClearBuffer(const glm::vec4& bg)
 {
 	framebuffer->Clear(bg);
 	depthbuffer->Clear();
+	if (shadow_map)
+		shadow_map->Clear(glm::vec4(1.0f));
 }
 
-FrameBuffer& SceneContext::GetFrameBufferPointer() noexcept
+FrameBuffer* SceneContext::GetFrameBufferPointer() noexcept
 {
-	return *framebuffer;
+	assert(framebuffer != nullptr);
+	return framebuffer.get();
 }
 
-DepthBuffer& SceneContext::GetDepthBufferPointer() noexcept
+DepthBuffer* SceneContext::GetDepthBufferPointer() noexcept
 {
-	return *depthbuffer;
+	assert(depthbuffer != nullptr);
+	return depthbuffer.get();
+}
+
+FrameBuffer* SceneContext::GetRenderTarget() noexcept
+{
+	assert(render_target != nullptr);
+	return render_target;
+}
+
+FrameBuffer* SceneContext::GetShadowMapPointer() noexcept
+{
+	assert(shadow_map != nullptr);
+	return shadow_map.get();
+}
+
+void SceneContext::SetRenderTarget(FrameBuffer* target)
+{
+	render_target = target;
 }

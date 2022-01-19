@@ -74,9 +74,9 @@ inline void Pipeline<Shader>::RasterizeTriangle(const VSOut& v0, const VSOut& v1
 	int miny = std::floor(std::min({ vv0.y, vv1.y, vv2.y }));
 	int maxy = std::ceil(std::max({ vv0.y, vv1.y, vv2.y }));
 	minx = std::max(0, minx - 1);
-	maxx = std::min(pContext->GetFrameBufferPointer().GetWidth() - 1, maxx + 1);
-	miny = std::max(0, miny);
-	maxy = std::min(pContext->GetFrameBufferPointer().GetHeight() - 1, maxy + 1);
+	maxx = std::min(pContext->GetRenderTarget()->GetWidth() - 1, maxx + 1);
+	miny = std::max(0, miny - 1);
+	maxy = std::min(pContext->GetRenderTarget()->GetHeight() - 1, maxy + 1);
 
 	// 求解重心坐标 Barycentric
 	// reference  https://zhuanlan.zhihu.com/p/337296743
@@ -99,7 +99,7 @@ inline void Pipeline<Shader>::RasterizeTriangle(const VSOut& v0, const VSOut& v1
 				float Z = v0.proj_pos.z * bary.x + v1.proj_pos.z * bary.y + v2.proj_pos.z * bary.z;
 				
 				//深度测试
-				if ( pContext->GetDepthBufferPointer().TryUpdate(i, j, Z) ) {
+				if ( pContext->GetDepthBufferPointer()->TryUpdate(i, j, Z) ) {
 					bary.x *= v0.proj_pos.w;  // 注意这里w是1/w
 					bary.y *= v1.proj_pos.w;
 					bary.z *= v2.proj_pos.w;
@@ -116,12 +116,12 @@ inline void Pipeline<Shader>::RasterizeTriangle(const VSOut& v0, const VSOut& v1
 					// 3、 函数。目前看来算是取得了一点平衡
 					v2f = VSOut::Lerp(v0, v1, v2, bary.x, bary.y, bary.z);
 					// 4、 反射？？
-					
+
 
 					// 如果DivideAndTransform把其他属性也除w 那这里就要恢复（在插值后）
 					//const float w = 1.0f / v2f.proj_pos.w;   
 					//v2f *= w;
-					pContext->GetFrameBufferPointer().write(i, j, shader.ps(v2f, current_model_id, current_mesh_id));
+					pContext->GetRenderTarget()->write(i, j, shader.ps(v2f, current_model_id, current_mesh_id));
 				}
 			}
 		}
@@ -141,9 +141,10 @@ Pipeline<Shader>::DivideAndTransform(const VSOut& v)
 	float invW = 1.0f / ret.proj_pos.w;
 	ret.proj_pos *= invW;  // ！shader中对于VSOut要根据需要重载*=，（也包含了坐标齐次化）
 
-	ret.proj_pos.x = (1.0f + ret.proj_pos.x) * pContext->GetFrameBufferPointer().GetWidth() * 0.5f;
-	ret.proj_pos.y = (1.0f - ret.proj_pos.y) * pContext->GetFrameBufferPointer().GetHeight() * 0.5f;
+	ret.proj_pos.x = (1.0f + ret.proj_pos.x) * pContext->GetRenderTarget()->GetWidth() * 0.5f;
+	ret.proj_pos.y = (1.0f - ret.proj_pos.y) * pContext->GetRenderTarget()->GetHeight() * 0.5f;
 	//  -1 <= z <= 1 
+	ret.proj_pos.z = (1.0f + ret.proj_pos.z) * 0.5; // 0 <= z <= 1;
 
 	// 把 1/w 放在w处，用于插值时恢复
 	ret.proj_pos.w = invW;
@@ -197,11 +198,11 @@ inline void Pipeline<Shader>::DrawMesh(const Mesh& mesh)
 template<class Shader>
 inline void Pipeline<Shader>::Draw(uint32_t model_id)
 {
-	shader.vs.BindAllMat(
-		pContext->models[model_id]->model_matrix,
-		pContext->camera->GetView(),
-		pContext->camera->GetProj()
-	);
+	//shader.vs.BindAllMat(
+	//	pContext->models[model_id]->model_matrix,
+	//	pContext->camera->GetView(),
+	//	pContext->camera->GetProj()
+	//);
 
 	current_model_id = model_id;
 	const auto& model = pContext->models[model_id];
@@ -212,7 +213,7 @@ inline void Pipeline<Shader>::Draw(uint32_t model_id)
 }
 
 template<class Shader>
-inline void Pipeline<Shader>::SetConfig(const PipelineConfig& cfg)
+inline void Pipeline<Shader>::BindConfig(const PipelineConfig& cfg)
 {
 	config = cfg;
 }
@@ -222,6 +223,12 @@ inline void Pipeline<Shader>::BindContext(std::shared_ptr<SceneContext> context)
 {
 	shader.ps.pContext = context;
 	pContext = context;
+}
+
+template<class Shader>
+inline Shader& Pipeline<Shader>::GetShader()
+{
+	return shader;
 }
 
 template<class Shader>
@@ -251,7 +258,7 @@ inline void Pipeline<Shader>::DrawLine(const int x0, const int y0, const int x1,
 		//	(f ? ny : nx) += offset[errorIsTooBig];
 		for (int i = 0; i <= dLong; ++i)
 		{
-			pContext->GetFrameBufferPointer().write(nx, ny, color);
+			pContext->GetRenderTarget()->write(nx, ny, color);
 			const int errorIsTooBig = error >= 0;
 			nx += offsetLong;
 			ny += offset[errorIsTooBig];
@@ -261,7 +268,7 @@ inline void Pipeline<Shader>::DrawLine(const int x0, const int y0, const int x1,
 	else {
 		for (int i = 0; i <= dLong; ++i)
 		{
-			pContext->GetFrameBufferPointer().write(nx, ny, color);
+			pContext->GetRenderTarget()->write(nx, ny, color);
 			const int errorIsTooBig = error >= 0;
 			ny += offsetLong;
 			nx += offset[errorIsTooBig];

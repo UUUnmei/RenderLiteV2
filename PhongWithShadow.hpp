@@ -3,13 +3,14 @@
 #include "Vertex.h"
 #include "SceneContext.h"
 #include "VertexShaderMatHelper.h"
+#include "FrameBuffer.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <memory>
 
-class PhongShader
+class PhongWithShadow
 {
 public:
 
@@ -18,6 +19,7 @@ public:
 		glm::vec4 normal;
 		glm::vec2 texcoord;
 		glm::vec3 world_pos;
+		glm::vec4 pos_from_light;
 
 		VSOut& operator+=(const VSOut& rhs)
 		{
@@ -25,6 +27,7 @@ public:
 			normal += rhs.normal;
 			texcoord += rhs.texcoord;
 			world_pos += rhs.world_pos;
+			pos_from_light += rhs.pos_from_light;
 			return *this;
 		}
 		VSOut operator+(const VSOut& rhs) const
@@ -37,6 +40,7 @@ public:
 			normal *= v;
 			texcoord *= v;
 			world_pos *= v;
+			pos_from_light *= v;
 			return *this;
 		}
 		VSOut operator*(float rhs) const
@@ -46,9 +50,13 @@ public:
 
 		static VSOut Lerp(const VSOut& v0, const VSOut& v1, const VSOut& v2, float a, float b, float c) noexcept {
 			VSOut ret;
+			ret.proj_pos = v0.proj_pos * a + v1.proj_pos * b + v2.proj_pos * c;
 			ret.normal = v0.normal * a + v1.normal * b + v2.normal * c;
 			ret.texcoord = v0.texcoord * a + v1.texcoord * b + v2.texcoord * c;
 			ret.world_pos = v0.world_pos * a + v1.world_pos * b + v2.world_pos * c;
+			ret.pos_from_light = v0.pos_from_light * a + v1.pos_from_light * b + v2.pos_from_light * c;
+			//const float w = 1.0f / ret.proj_pos.w;
+			//ret.pos_from_light *= w;
 			return ret;
 		}
 
@@ -57,6 +65,8 @@ public:
 
 	class VertexShader : public VertexShaderMatHelper {
 	public:
+		glm::mat4 light_mvp;
+
 		VSOut operator()(const Vertex& v) const
 		{
 			glm::vec4 world_pos = model * glm::vec4(v.position, 1.0f);
@@ -64,7 +74,8 @@ public:
 				proj_view * world_pos,
 				model * glm::vec4(v.normal, 0.0f),
 				v.texcoord,
-				glm::vec3(world_pos)
+				glm::vec3(world_pos),
+				light_mvp * glm::vec4(v.position, 1.0f)
 			};
 		}
 	};
@@ -85,9 +96,7 @@ public:
 			return res;
 		}
 
-
-		glm::vec4 operator()(const VSOut& v, int modelId, int meshId)
-		{
+		glm::vec4 BlinnPhong(const VSOut& v, int modelId, int meshId) {
 			glm::vec3 light_pos = pContext->light->position;
 			glm::vec3 light_intensity = pContext->light->intensity;
 			glm::vec3 camera_pos = pContext->camera_pos_cache;
@@ -125,8 +134,44 @@ public:
 			color.r = std::max(0.0f, std::min(1.0f, color.r)); // Saturate
 			color.g = std::max(0.0f, std::min(1.0f, color.g));
 			color.b = std::max(0.0f, std::min(1.0f, color.b));
-
 			return glm::vec4(color, 1.0f);
+		}
+
+		float DecodeFloatFromRGBA(const glm::vec4& rgba)
+		{
+			return glm::dot(rgba, glm::vec4(1.0f, 1 / 255.0f, 1 / 65025.0f, 1 / 16581375.0f));
+		}
+
+		float LookUpShadowMap(const glm::vec4& shadowCoord) {
+			float x = shadowCoord.x * pContext->GetRenderTarget()->GetWidth();
+			float y = shadowCoord.y * pContext->GetRenderTarget()->GetHeight();
+			glm::vec4 vZ;
+			pContext->GetShadowMapPointer()->read(x, y, vZ);
+			float fZ = DecodeFloatFromRGBA(vZ);
+			if (fZ < shadowCoord.z) return 0.0f;
+			return 1.0f;
+		}
+
+		float LinearDepth01(float Z) {
+			const float near = 0.1f;
+			const float far = 1000.0f;
+			const float div = far / near;
+			return 1.0f / ((1 - div) * Z + div);
+		}
+
+		glm::vec4 operator()(const VSOut& v, int modelId, int meshId)
+		{
+			glm::vec4 color = BlinnPhong(v, modelId, meshId);
+
+			glm::vec4 shadowCoord = v.pos_from_light / v.pos_from_light.w;
+			shadowCoord.x = shadowCoord.x * 0.5f + 0.5f;
+			shadowCoord.y = -shadowCoord.y * 0.5f + 0.5f;
+			shadowCoord.z = shadowCoord.z * 0.5f + 0.5f;
+			float visibility = LookUpShadowMap(shadowCoord);
+
+			return visibility * color;
+
+			//return glm::vec4(glm::vec3(LinearDepth01(v.proj_pos.z)), 1.0f);
 		}
 	};
 
@@ -134,5 +179,9 @@ public:
 	VertexShader vs;
 	PixelShader ps;
 
+
+	void BindLigthMVP(const glm::mat4& mat) {
+		vs.light_mvp = mat;
+	}
 };
 

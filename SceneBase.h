@@ -17,5 +17,6 @@ public:
 	virtual void Init() = 0;
 	virtual void Draw() = 0;
 	
+	virtual void OnKeyChanged(int key, int scanCode, int action, int mode) = 0;
 };
 

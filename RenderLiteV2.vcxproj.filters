@@ -72,6 +72,12 @@
     <ClCompile Include="CubeScene.cpp">
       <Filter>Scenes</Filter>
     </ClCompile>
+    <ClCompile Include="DirectionalLight.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="stb_image_write.h">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Window.h">
@@ -144,6 +150,18 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="PhongShader.hpp">
+      <Filter>Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="DirectionalLight.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="LightShader.hpp">
+      <Filter>Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="ShadowShader.hpp">
+      <Filter>Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="PhongWithShadow.hpp">
       <Filter>Shaders</Filter>
     </ClInclude>
   </ItemGroup>

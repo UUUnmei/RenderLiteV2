@@ -24,5 +24,7 @@ public:
 	bool read(uint32_t x, uint32_t y, glm::vec4& color);
 	bool write(uint32_t x, uint32_t y, const glm::vec4& color);
 
+	static void Dump(const char* outputname, int w, int h, int bpp, const unsigned char* data);
+
 };
 

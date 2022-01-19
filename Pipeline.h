@@ -64,8 +64,11 @@ private:
 public:
 	void DrawMesh(const Mesh& mesh);
 	void Draw(uint32_t model_id);
+
 	void BindContext(std::shared_ptr<SceneContext> context);
-	void SetConfig(const PipelineConfig& cfg);
+	void BindConfig(const PipelineConfig& cfg);
+
+	Shader& GetShader();
 };
 
 
