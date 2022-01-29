@@ -13,12 +13,6 @@ const unsigned char* CubeScene::GetFrameBuffer() const
 	return context->GetFrameBufferPointer()->Get();
 }
 
-namespace {
-	void print(const glm::vec3& v) {
-		std::cout << v.x << ' ' << v.y << ' ' << v.z << '\n';
-	}
-}
-
 void CubeScene::Init()
 {
 	std::shared_ptr<OrbitCamera> cam = std::make_shared<OrbitCamera>(width, height, glm::radians(45.0f), width * 1.0f / height, 0.1, 1000.f);
@@ -46,7 +40,7 @@ void CubeScene::Init()
 	lrender.GetShader().vs.BindMatProj(context->camera->GetProj());
 
 	srender.BindContext(context);
-
+	srender.GetShader().vs.BindMatProj(context->light->projection);
 
 	context->SetRenderTarget(context->GetFrameBufferPointer());
 }
@@ -54,9 +48,9 @@ void CubeScene::Init()
 void CubeScene::Draw()
 {
 	// movable light test
-	//static float d = 45.0f;
-	//d += 1.0f;
-	//context->light->WithPosition(glm::vec3(25 * cosf(glm::radians(d)), 50.0f, 25 * sinf(glm::radians(d))));
+	static float d = 45.0f;
+	d += 1.0f;
+	context->light->WithPosition(glm::vec3(25 * cosf(glm::radians(d)), 50.0f, 25 * sinf(glm::radians(d))));
 
 	context->ClearBuffer();
 	context->camera_pos_cache = context->camera->GetCameraPosition();

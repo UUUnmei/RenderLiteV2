@@ -10,7 +10,7 @@
 
 #include <memory>
 
-class PhongWithShadow
+class PCSS
 {
 public:
 
@@ -55,8 +55,6 @@ public:
 			ret.texcoord = v0.texcoord * a + v1.texcoord * b + v2.texcoord * c;
 			ret.world_pos = v0.world_pos * a + v1.world_pos * b + v2.world_pos * c;
 			ret.pos_from_light = v0.pos_from_light * a + v1.pos_from_light * b + v2.pos_from_light * c;
-			//const float w = 1.0f / ret.proj_pos.w;
-			//ret.pos_from_light *= w;
 			return ret;
 		}
 
@@ -81,6 +79,33 @@ public:
 	};
 
 	class PixelShader {
+		glm::vec2 poissonDisk[27];
+		static constexpr int RINGS = 10;
+		static constexpr int SAMPLES = 27;
+		static constexpr float PI = 3.1415926;
+		float rand(const glm::vec3& co) 
+		{ // -1 ~ 1
+			return glm::fract(glm::sin(glm::dot(glm::vec2(co) * co.z, glm::vec2(12.9898, 78.233))) * 43758.5453);
+		}
+		void poissonSampler(const glm::vec4& seed) {
+			// calc sampling points with poisson
+			float angleStep = PI * 2 * float(RINGS) / float(SAMPLES);
+			float angle = rand(seed) * PI * 2;
+
+			float radius = 1.0 / float(SAMPLES);
+			float radiusStep = radius;
+
+			for (int i = 0; i < SAMPLES; i++) {
+				poissonDisk[i] = glm::vec2(cos(angle), sin(angle)) * pow(radius, 0.75f);
+				radius += radiusStep;
+				angle += angleStep;
+			}
+		}
+		static constexpr float LIGHT_WORLD_SIZE = 0.4;  //size of light mesh cube
+		static constexpr float LIGHT_FRUSTUM_SIZE = 200.0;
+		static constexpr float LIGHT_SIZE_UV = (LIGHT_WORLD_SIZE / LIGHT_FRUSTUM_SIZE);
+		static constexpr float NEAR_PLANE = 1.0f;
+
 	public:
 		std::shared_ptr<SceneContext> pContext;
 
@@ -142,22 +167,55 @@ public:
 			return glm::dot(rgba, glm::vec4(1.0f, 1 / 255.0f, 1 / 65025.0f, 1 / 16581375.0f));
 		}
 
-		float LookUpShadowMap(const glm::vec4& shadowCoord) {
+		float PenumbraRatio(float zReceiver, float zBlocker) {
+			return (zReceiver - zBlocker) / zBlocker;
+		}
+
+		float FindBlocker(const glm::vec2& uv, float zReceiver) {
+			int cnt = 0;
+			float sumZ = 0.0;
+			float searchRadius = LIGHT_SIZE_UV * (zReceiver - NEAR_PLANE) / zReceiver;
+			for (int i = 0; i < SAMPLES; i++) {
+				glm::vec2 cur = uv + poissonDisk[i] * searchRadius;
+				float Z = LookUpShadowMap(cur);
+				if (Z < zReceiver) {
+					sumZ += Z;
+					cnt ++;
+				}
+			}
+			return cnt > 0.0 ? sumZ / cnt : -1.0;
+		}
+
+		float LookUpShadowMap(const glm::vec2& shadowCoord) {
 			float x = shadowCoord.x * pContext->GetShadowMapPointer()->GetWidth();
 			float y = shadowCoord.y * pContext->GetShadowMapPointer()->GetHeight();
 			glm::vec4 vZ;
 			pContext->GetShadowMapPointer()->read(x, y, vZ);
 			float fZ = DecodeFloatFromRGBA(vZ);
-			if (fZ < shadowCoord.z - 0.004) return 0.0f;
-			return 1.0f;
+			return fZ;
 		}
 
-		float LinearDepth01(float Z) {
-			const float near = 0.1f;
-			const float far = 1000.0f;
-			const float div = far / near;
-			return 1.0f / ((1 - div) * Z + div);
+		float PCSS(const glm::vec4& shadowCoord) {
+			poissonSampler(shadowCoord);
+			// STEP 1: avgblocker depth
+			float zBlocker = FindBlocker(glm::vec2(shadowCoord), shadowCoord.z);
+			if (zBlocker < 0.0) return 1.0;
+			// STEP 2: penumbra size
+			float penumbraRadius = PenumbraRatio(shadowCoord.z, zBlocker)
+				* LIGHT_SIZE_UV * NEAR_PLANE / shadowCoord.z;
+			// STEP 3: filtering
+			// PCF
+			float Radius = penumbraRadius;
+			float cnt = 0.0;
+			for (int i = 0; i < SAMPLES; i++) {
+				glm::vec2 cur = poissonDisk[i] * Radius + glm::vec2(shadowCoord);
+				float Z = LookUpShadowMap(cur);
+				if (Z < shadowCoord.z - 0.01)
+					cnt += 1.0;
+			}
+			return 1.0 - cnt / float(SAMPLES);
 		}
+
 
 		glm::vec4 operator()(const VSOut& v, int modelId, int meshId)
 		{
@@ -167,11 +225,9 @@ public:
 			shadowCoord.x = shadowCoord.x * 0.5f + 0.5f;
 			shadowCoord.y = -shadowCoord.y * 0.5f + 0.5f;
 			shadowCoord.z = shadowCoord.z * 0.5f + 0.5f;
-			float visibility = LookUpShadowMap(shadowCoord);
+			float visibility = PCSS(shadowCoord);
 
 			return visibility * color;
-
-			//return glm::vec4(glm::vec3(LinearDepth01(v.proj_pos.z)), 1.0f);
 		}
 	};
 

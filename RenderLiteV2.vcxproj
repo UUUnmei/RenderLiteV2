@@ -173,6 +173,7 @@
     <ClCompile Include="CubeScene.cpp" />
     <ClCompile Include="DepthBuffer.cpp" />
     <ClCompile Include="DirectionalLight.cpp" />
+    <ClCompile Include="PCSSScene.cpp" />
     <ClCompile Include="SceneContext.cpp" />
     <ClCompile Include="FrameBuffer.cpp" />
     <ClCompile Include="glad.c" />
@@ -195,6 +196,7 @@
     <ClInclude Include="CubeScene.h" />
     <ClInclude Include="DepthBuffer.h" />
     <ClInclude Include="DirectionalLight.h" />
+    <ClInclude Include="PCSSScene.h" />
     <ClInclude Include="PhongShader.hpp">
       <SubType>
       </SubType>
@@ -220,6 +222,10 @@
       </SubType>
     </ClInclude>
     <ClInclude Include="PhongWithShadow.hpp">
+      <SubType>
+      </SubType>
+    </ClInclude>
+    <ClInclude Include="PCSS.hpp">
       <SubType>
       </SubType>
     </ClInclude>

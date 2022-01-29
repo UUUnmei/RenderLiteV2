@@ -8,7 +8,8 @@ namespace ConfigParams {
 
 	enum class FaceCullOrder {
 		CCW,   // DEFAULT, treat CCW as FRONT 
-		CW		//  treat CW as FRONT
+		CW,		//  treat CW as FRONT
+		NONE
 	};
 }
 

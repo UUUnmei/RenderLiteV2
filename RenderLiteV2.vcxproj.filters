@@ -78,6 +78,9 @@
     <ClCompile Include="stb_image_write.h">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="PCSSScene.cpp">
+      <Filter>Scenes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Window.h">
@@ -163,6 +166,12 @@
     </ClInclude>
     <ClInclude Include="PhongWithShadow.hpp">
       <Filter>Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="PCSS.hpp">
+      <Filter>Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="PCSSScene.h">
+      <Filter>Scenes</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
