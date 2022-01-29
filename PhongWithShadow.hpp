@@ -143,8 +143,8 @@ public:
 		}
 
 		float LookUpShadowMap(const glm::vec4& shadowCoord) {
-			float x = shadowCoord.x * pContext->GetRenderTarget()->GetWidth();
-			float y = shadowCoord.y * pContext->GetRenderTarget()->GetHeight();
+			float x = shadowCoord.x * pContext->GetShadowMapPointer()->GetWidth();
+			float y = shadowCoord.y * pContext->GetShadowMapPointer()->GetHeight();
 			glm::vec4 vZ;
 			pContext->GetShadowMapPointer()->read(x, y, vZ);
 			float fZ = DecodeFloatFromRGBA(vZ);

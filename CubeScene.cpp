@@ -8,29 +8,26 @@ CubeScene::CubeScene(uint32_t w, uint32_t h)
 	height = h;
 }
 
-void CubeScene::OnKeyChanged(int key, int scanCode, int action, int mode)
-{
-	if (key == GLFW_KEY_SPACE) {
-		Image::Dump("depth.png", 800, 600, 4, context->GetShadowMapPointer()->Get());
-		std::cout << "DEPTH output\n";
-	}
-}
-
 const unsigned char* CubeScene::GetFrameBuffer() const
 {
 	return context->GetFrameBufferPointer()->Get();
+}
+
+namespace {
+	void print(const glm::vec3& v) {
+		std::cout << v.x << ' ' << v.y << ' ' << v.z << '\n';
+	}
 }
 
 void CubeScene::Init()
 {
 	std::shared_ptr<OrbitCamera> cam = std::make_shared<OrbitCamera>(width, height, glm::radians(45.0f), width * 1.0f / height, 0.1, 1000.f);
 	context->AddCamera( cam );
-	std::shared_ptr<DirectionalLight> light = std::make_shared<DirectionalLight>(glm::vec3(25.0f, 50.0f, 25.0f), glm::vec3(1500.f));
-	light->BindMatModel(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)));
-	light->BindMatView(glm::lookAt(light->position, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
-	float e = 100.0f;
-	light->BindMatProj(glm::ortho(-e, e, -e, e, 0.1f, 1000.f));
-	//light->BindMatProj(glm::perspective(glm::radians(45.0f), width * 1.0f / height, 0.1f, 1000.f));
+	std::shared_ptr<DirectionalLight> light = std::make_shared<DirectionalLight>();
+	light->WithPosition(glm::vec3(25.0f, 50.0f, 25.0f))
+		.WithDirection(light->target - light->position)
+		.WithIntensity(1500.f)
+		.WithRange(100.0f);
 	light->CalcMVP();
 	context->AddLight( light );
 	context->EnableShadowMap();
@@ -38,7 +35,7 @@ void CubeScene::Init()
 	context->AddModel("obj/nanosuit/nanosuit.obj")
 		.BindModelMat(glm::scale(glm::mat4(1.0f), glm::vec3(3.0f)));
 	//context->AddModel("obj/mary/Marry.obj")
-	//	.BindModelMat(glm::scale(glm::mat4(1.0f), glm::vec3(5.0f)));
+	//	.BindModelMat(glm::scale(glm::mat4(1.0f), glm::vec3(20.0f)));
 	context->AddModel("obj/floor/floor.obj")
 		.BindModelMat(glm::scale(glm::mat4(1.0f), glm::vec3(2.0f)));
 	
@@ -57,10 +54,9 @@ void CubeScene::Init()
 void CubeScene::Draw()
 {
 	// movable light test
-	static float d = 45.0f;
-	d += 5.0f;
-	context->light->position = glm::vec3(25 * cosf(glm::radians(d)), 50.0f, 25 * sinf(glm::radians(d)));
-	context->light->BindMatView(glm::lookAt(context->light->position, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
+	//static float d = 45.0f;
+	//d += 1.0f;
+	//context->light->WithPosition(glm::vec3(25 * cosf(glm::radians(d)), 50.0f, 25 * sinf(glm::radians(d))));
 
 	context->ClearBuffer();
 	context->camera_pos_cache = context->camera->GetCameraPosition();
@@ -83,7 +79,8 @@ void CubeScene::Draw()
 	context->GetDepthBufferPointer()->Clear();
 
 	// draw pass
-	lrender.GetShader().vs.BindMatModel(glm::translate(glm::mat4(1.0f), context->light->position));
+	context->light->BindOwnModel();
+	lrender.GetShader().vs.BindMatModel(context->light->model);
 	lrender.GetShader().vs.BindMatView(context->camera_view_cache);
 	lrender.DrawMesh(context->light->mesh);  // DrawMesh instead of Draw
 
@@ -102,6 +99,22 @@ void CubeScene::Draw()
 	psrender.GetShader().BindLigthMVP(context->light->mvp);
 	psrender.Draw(1);
 	
+}
+
+void CubeScene::OnKeyChanged(int key, int scanCode, int action, int mode)
+{
+}
+
+void CubeScene::OnMousePositionChanged(double xpos, double ypos)
+{
+}
+
+void CubeScene::OnMouseButtonChanged(int button, int action, int mode)
+{
+}
+
+void CubeScene::OnScrollChanged(double x, double y)
+{
 }
 
 OrbitCamera& CubeScene::GetCamera()

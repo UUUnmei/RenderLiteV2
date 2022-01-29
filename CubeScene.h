@@ -29,13 +29,18 @@ public:
 	
 	CubeScene(uint32_t w, uint32_t h);
 
-	virtual void OnKeyChanged(int key, int scanCode, int action, int mode) override final;
+	
 
 	// Í¨¹ý SceneBase ¼Ì³Ð
-	virtual const unsigned char* GetFrameBuffer() const override final;
-	virtual OrbitCamera& GetCamera() override;
-	virtual void Init() override final;
-	virtual void Draw() override final;
+	const unsigned char* GetFrameBuffer() const override;
+	OrbitCamera& GetCamera() override;
+	void Init() override;
+	void Draw() override;
+
+	void OnKeyChanged(int key, int scanCode, int action, int mode) override;
+	void OnMousePositionChanged(double xpos, double ypos) override;
+	void OnMouseButtonChanged(int button, int action, int mode) override;
+	void OnScrollChanged(double x, double y) override;
 
 };
 

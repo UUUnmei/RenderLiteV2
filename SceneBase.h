@@ -18,5 +18,8 @@ public:
 	virtual void Draw() = 0;
 	
 	virtual void OnKeyChanged(int key, int scanCode, int action, int mode) = 0;
+	virtual void OnMousePositionChanged(double xpos, double ypos) = 0;
+	virtual void OnMouseButtonChanged(int button, int action, int mode) = 0;
+	virtual void OnScrollChanged(double x, double y) = 0;
 };
 

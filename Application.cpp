@@ -155,6 +155,7 @@ void Application::SetCallBacks()
 	window->AddOnMousePositionChanged([this](double x, double y) {
 		//std::cout << "current mouse pos: " << x << ' ' << y << '\n';
 		scene->GetCamera().OnMousePositionChanged(x, y);
+		scene->OnMousePositionChanged(x, y);
 		});
 	window->AddOnKeyChanged([this](int key, int scancode, int action, int mode) {
 		scene->OnKeyChanged(key, scancode, action, mode);
@@ -162,8 +163,10 @@ void Application::SetCallBacks()
 		});
 	window->AddOnMouseButtonChanged([this](int button, int action, int mode) {
 		scene->GetCamera().OnMouseButtonChanged(button, action, mode);
+		scene->OnMouseButtonChanged(button, action, mode);
 		});
 	window->AddOnScrollChanged([this](double x, double y) {
 		scene->GetCamera().OnScrollChanged(x, y);
+		scene->OnScrollChanged(x, y);
 		});
 }
