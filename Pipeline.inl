@@ -34,13 +34,97 @@ inline void Pipeline<Shader>::AssembleTriangles(const std::vector<VSOut>& vertic
 	}
 }
 
+namespace {
+	const std::vector<glm::vec4> clip_planes{
+		{0,0,1,1},  //near MUST 
+		{0,0,-1,1}, //far
+		{1,0,0,1},  //left   这里平面的顺序似乎没有二维要求那么严格
+		{0,-1,0,1}, //bottom 
+		{-1,0,0,1}, //right
+		{0,1,0,1}   //top
+	};
+}
+
+
 template<class Shader>
 inline void Pipeline<Shader>::ProcessTriangle(const VSOut& v0, const VSOut& v1, const VSOut& v2)
 {
 	// 默认使用右手系、x,y,z的合法范围都是[-w,+w]
-	if (!CVVCheck(v0.proj_pos) || !CVVCheck(v1.proj_pos) || !CVVCheck(v2.proj_pos)) return;
-
+#ifdef SIMPLE_CLIP
+	if (!CVVCheck(v0.proj_pos) || !CVVCheck(v1.proj_pos) || !CVVCheck(v2.proj_pos))
+		return;
 	PostProcessTriangle(v0, v1, v2);
+#else
+	// discard points totally outside
+	if (v0.proj_pos.x > v0.proj_pos.w && v1.proj_pos.x > v1.proj_pos.w && v2.proj_pos.x > v2.proj_pos.w) return;
+	if (v0.proj_pos.x < -v0.proj_pos.w && v1.proj_pos.x < -v1.proj_pos.w && v2.proj_pos.x < -v2.proj_pos.w) return;
+	if (v0.proj_pos.y > v0.proj_pos.w && v1.proj_pos.y > v1.proj_pos.w && v2.proj_pos.y > v2.proj_pos.w) return;
+	if (v0.proj_pos.y < -v0.proj_pos.w && v1.proj_pos.y < -v1.proj_pos.w && v2.proj_pos.y < -v2.proj_pos.w) return;
+	if (v0.proj_pos.z > v0.proj_pos.w && v1.proj_pos.z > v1.proj_pos.w && v2.proj_pos.z > v2.proj_pos.w) return;
+	if (v0.proj_pos.z < -v0.proj_pos.w && v1.proj_pos.z < -v1.proj_pos.w && v2.proj_pos.z < -v2.proj_pos.w) return;
+	// if totally inside, no clip
+	if (CVVCheck(v0.proj_pos) && CVVCheck(v1.proj_pos) && CVVCheck(v2.proj_pos)) 
+		PostProcessTriangle(v0, v1, v2);
+
+	// homogeneous clipping
+	// Sutherland_Hodgeman
+
+	auto get_intersection = [&](int plane, const VSOut& p1, const VSOut& p2, VSOut& res)
+		-> void {
+		float d1 = glm::dot(clip_planes[plane], p1.proj_pos);
+		float d2 = glm::dot(clip_planes[plane], p2.proj_pos);
+		float t = d1 / (d1 - d2);
+		res = p1 * (1 - t) + p2 * t;  // 需要重载+*
+	};
+	auto inside_test = [&](int plane, const glm::vec4& point) -> bool {
+		return glm::dot(clip_planes[plane], point) > 0;
+		//suppose near plane
+		//same as z+w>0 => z>-w
+	};
+
+	VSOut vso[7], tmp[7]; 
+	int len = 3;
+	vso[0] = v0, vso[1] = v1, vso[2] = v2;
+	for (int k = 0; k < clip_planes.size(); ++k) {
+		int cnt = 0;
+		for (int i = 0; i < len; ++i) {
+			int j = (i + 1) % len;
+
+			bool f1 = inside_test(k, vso[i].proj_pos); //为真表示该点在要保留的范围
+			bool f2 = inside_test(k, vso[j].proj_pos);
+
+			if (f1 && f2) {
+				// 两点都可见 要第二个点
+				tmp[cnt++] = vso[j];
+			}
+			else if (f1) {
+				// 只有第一个点可见， 要与边界的交点
+				get_intersection(k, vso[i], vso[j], tmp[cnt++]);
+			}
+			else if (f2) {
+				// 只有第二个点可见，要交点和第二个点
+				get_intersection(k, vso[i], vso[j], tmp[cnt++]);
+				tmp[cnt++] = vso[j];
+			}
+			else {
+				// 都不可见，弃之
+			}
+		}
+		assert(cnt <= 6);
+		len = cnt;
+		for (int i = 0; i < cnt; ++i)
+			vso[i] = tmp[i];
+	}
+
+	// process cliped triangles
+	for (int i = 0; i < len - 2; ++i) {
+		PostProcessTriangle(
+			vso[0],
+			vso[i + 1],
+			vso[i + 2]
+		);
+	}
+#endif
 }
 
 template<class Shader>

@@ -51,9 +51,9 @@ void PCSSScene::Init()
 void PCSSScene::Draw()
 {
 	// movable light test
-static float d = 45.0f;
-d += 3.0f;
-context->light->WithPosition(glm::vec3(50 * cosf(glm::radians(d)), 60.0f, 50 * sinf(glm::radians(d))));
+//static float d = 45.0f;
+//d += 3.0f;
+//context->light->WithPosition(glm::vec3(50 * cosf(glm::radians(d)), 60.0f, 50 * sinf(glm::radians(d))));
 
 	context->ClearBuffer();
 	context->camera_pos_cache = context->camera->GetCameraPosition();

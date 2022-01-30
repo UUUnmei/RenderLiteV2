@@ -3,6 +3,7 @@
 #include "SceneBase.h"
 #include "OrbitCamera.h"
 #include "PCSS.hpp"
+#include "PhongWithShadow.hpp"
 #include "LightShader.hpp"
 #include "ShadowShader.hpp"
 #include "Pipeline.h"
@@ -10,10 +11,12 @@
 class PCSSScene : public SceneBase
 {
 	using PCSSRenderer = Pipeline<PCSS>;
+    // using PhongShadowRenderer = Pipeline<PhongWithShadow>;
 	using LightRenderer = Pipeline<LightShader>;
 	using ShadowRenderer = Pipeline<ShadowShader>;
 public:
 	PCSSRenderer psrender;
+    // PhongShadowRenderer psrender;
 	LightRenderer lrender;
 	ShadowRenderer srender;
 	std::shared_ptr<SceneContext> context;

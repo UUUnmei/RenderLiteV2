@@ -57,7 +57,6 @@ private:
 	bool FaceCullCW(const glm::vec4& v0, const glm::vec4& v1, const glm::vec4& v2);
 	// cvv内外判断  为真表示完全在cvv内
 	bool CVVCheck(const glm::vec4& v);
-	// TODO 齐次裁剪
 
 	uint32_t current_model_id{ 0 };
 	uint32_t current_mesh_id{ 0 };

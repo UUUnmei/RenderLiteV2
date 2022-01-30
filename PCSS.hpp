@@ -9,7 +9,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <memory>
-
+//http://www.opengl-tutorial.org/cn/intermediate-tutorials/tutorial-16-shadow-mapping
 class PCSS
 {
 public:
@@ -79,7 +79,35 @@ public:
 	};
 
 	class PixelShader {
-		glm::vec2 poissonDisk[27];
+		glm::vec2 poissonDisk[27] = {
+{-0.08442619, 0.00000001},   // generated with "rand(seed) = 0.5"
+{0.09743761, -0.10327788},
+{0.01119006, 0.19212449},
+{-0.18292630, -0.15349336},
+{0.28038719, -0.03277263},
+{-0.19327696, 0.25961623},
+{-0.06309206, -0.35780966},
+{0.33553284, 0.22068308},
+{-0.42686638, 0.10116915},
+{0.23738207, -0.41115695},
+{0.14625250, 0.48852041},
+{-0.48643145, -0.24429660},
+{0.54315162, -0.19768898},
+{-0.24202490, 0.56107038},
+{-0.25487268, -0.59086937},
+{0.63467598, 0.23100731},
+{-0.63164681, 0.31721976},
+{0.21160516, -0.70679152},
+{0.38415477, 0.66538811},
+{-0.77692944, -0.18414302},
+{0.69196564, -0.45510325},
+{-0.14893284, 0.84458780},
+{-0.52948785, -0.71124256},
+{0.90926069, 0.10628858},
+{-0.72308743, 0.60672635},
+{0.05653549, -0.97044605},
+{0.68623090, 0.72738355}
+		};
 		static constexpr int RINGS = 10;
 		static constexpr int SAMPLES = 27;
 		static constexpr float PI = 3.1415926;
@@ -196,7 +224,9 @@ public:
 		}
 
 		float PCSS(const glm::vec4& shadowCoord) {
-			poissonSampler(shadowCoord);
+			//! if sample every time, down the performence a lot
+			//poissonSampler(shadowCoord);  
+			
 			// STEP 1: avgblocker depth
 			float zBlocker = FindBlocker(glm::vec2(shadowCoord), shadowCoord.z);
 			if (zBlocker < 0.0) return 1.0;
@@ -210,7 +240,7 @@ public:
 			for (int i = 0; i < SAMPLES; i++) {
 				glm::vec2 cur = poissonDisk[i] * Radius + glm::vec2(shadowCoord);
 				float Z = LookUpShadowMap(cur);
-				if (Z < shadowCoord.z - 0.01)
+				if (Z < shadowCoord.z - 0.007)
 					cnt += 1.0;
 			}
 			return 1.0 - cnt / float(SAMPLES);
