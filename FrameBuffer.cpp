@@ -27,7 +27,10 @@ const int FrameBuffer::GetHeight() const noexcept
 bool FrameBuffer::read(uint32_t x, uint32_t y, glm::vec4& color)
 {
 	if (x >= width || y >= height) {
-		color.r = color.g = color.b = 0;
+		// originally set rgb to 0,
+		// here set rgb to 1 for shadow map, especially make depth = 1 (b = 1)
+		// improve the shadow edge
+		color.r = color.g = color.b = 1; 
 		color.a = 1;
 		return false;
 	}

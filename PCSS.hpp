@@ -129,9 +129,9 @@ public:
 				angle += angleStep;
 			}
 		}
-		static constexpr float LIGHT_WORLD_SIZE = 0.4;  //size of light mesh cube
-		static constexpr float LIGHT_FRUSTUM_SIZE = 200.0;
-		static constexpr float LIGHT_SIZE_UV = (LIGHT_WORLD_SIZE / LIGHT_FRUSTUM_SIZE);
+		float LIGHT_WORLD_SIZE = 1.0;  //size of light mesh
+		float LIGHT_FRUSTUM_SIZE = 200.0;
+		float LIGHT_SIZE_UV; // = (LIGHT_WORLD_SIZE / LIGHT_FRUSTUM_SIZE);
 		static constexpr float NEAR_PLANE = 1.0f;
 
 	public:
@@ -224,6 +224,9 @@ public:
 		}
 
 		float PCSS(const glm::vec4& shadowCoord) {
+			LIGHT_FRUSTUM_SIZE = pContext->light->range;
+			LIGHT_SIZE_UV = (LIGHT_WORLD_SIZE / LIGHT_FRUSTUM_SIZE);
+
 			//! if sample every time, down the performence a lot
 			//poissonSampler(shadowCoord);  
 			
