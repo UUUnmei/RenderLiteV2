@@ -184,6 +184,7 @@
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="OrbitCamera.cpp" />
+    <ClCompile Include="Skybox.cpp" />
     <ClCompile Include="stb_image_write.h" />
     <ClCompile Include="Texture2D.cpp" />
     <ClCompile Include="Timer.cpp" />
@@ -229,10 +230,15 @@
       <SubType>
       </SubType>
     </ClInclude>
+    <ClInclude Include="SkyboxShader.hpp">
+      <SubType>
+      </SubType>
+    </ClInclude>
     <ClInclude Include="ShadowShader.hpp">
       <SubType>
       </SubType>
     </ClInclude>
+    <ClInclude Include="Skybox.h" />
     <ClInclude Include="stb_image.h" />
     <ClInclude Include="Texture2D.h" />
     <ClInclude Include="Timer.h" />

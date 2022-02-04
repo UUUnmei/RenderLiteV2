@@ -52,6 +52,11 @@ void SceneContext::AddCamera(std::shared_ptr<OrbitCamera> cam)
 	camera = cam;
 }
 
+void SceneContext::AddSkybox(std::shared_ptr<Skybox> sky)
+{
+	skybox = sky;
+}
+
 void SceneContext::AddLight(std::shared_ptr<DirectionalLight> L)
 {
 	light = L;

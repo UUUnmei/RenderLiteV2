@@ -38,18 +38,31 @@ namespace {
 	const std::vector<glm::vec4> clip_planes{
 		{0,0,1,1},  //near MUST 
 		{0,0,-1,1}, //far
-		{1,0,0,1},  //left   这里平面的顺序似乎没有二维要求那么严格
-		{0,-1,0,1}, //bottom 
+		{1,0,0,1}, //left
+		{0,1,0,1},  //top
 		{-1,0,0,1}, //right
-		{0,1,0,1}   //top
+		{0,-1,0,1}  //bottom 
 	};
+
+	void print(const glm::vec4& v) {
+		std::cout << v.x << ' ' << v.y << ' ' << v.z << ' ' << v.w;
+	}
+	void println(const glm::vec4& v) {
+		print(v);
+		std::cout << '\n';
+	}
 }
 
 
 template<class Shader>
 inline void Pipeline<Shader>::ProcessTriangle(const VSOut& v0, const VSOut& v1, const VSOut& v2)
 {
+	//println(v0.proj_pos);
+	//println(v1.proj_pos);
+	//println(v2.proj_pos);
+
 	// 默认使用右手系、x,y,z的合法范围都是[-w,+w]
+//#define SIMPLE_CLIP
 #ifdef SIMPLE_CLIP
 	if (!CVVCheck(v0.proj_pos) || !CVVCheck(v1.proj_pos) || !CVVCheck(v2.proj_pos))
 		return;
@@ -77,7 +90,7 @@ inline void Pipeline<Shader>::ProcessTriangle(const VSOut& v0, const VSOut& v1, 
 		res = p1 * (1 - t) + p2 * t;  // 需要重载+*
 	};
 	auto inside_test = [&](int plane, const glm::vec4& point) -> bool {
-		return glm::dot(clip_planes[plane], point) > 0;
+		return glm::dot(clip_planes[plane], point) >= 0;  // weired float precision when testing skybox 
 		//suppose near plane
 		//same as z+w>0 => z>-w
 	};
@@ -115,7 +128,7 @@ inline void Pipeline<Shader>::ProcessTriangle(const VSOut& v0, const VSOut& v1, 
 		for (int i = 0; i < cnt; ++i)
 			vso[i] = tmp[i];
 	}
-
+	
 	// process cliped triangles
 	for (int i = 0; i < len - 2; ++i) {
 		PostProcessTriangle(
