@@ -71,7 +71,11 @@ public:
 		{
 			auto material_id = pContext->models[modelId]->meshes[meshId].material_idx;
 			auto& material = pContext->models[modelId]->materials[material_id];
-			glm::vec4 color = material->diffuse->Sample(v.texcoord.x, v.texcoord.y);
+			glm::vec4 color;
+			if (material->diffuse != nullptr)
+				color = material->diffuse->Sample(v.texcoord.x, v.texcoord.y);
+			else
+				color = glm::vec4(material->Kd, 1.0f);
 			return color;
 		}
 	};
