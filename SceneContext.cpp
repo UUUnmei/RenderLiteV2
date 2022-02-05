@@ -1,7 +1,7 @@
 #include "SceneContext.h"
 
 SceneContext::SceneContext(uint32_t w, uint32_t h)
-	: camera(nullptr), light(nullptr), shadow_map(nullptr)
+	: camera(nullptr), light(nullptr), shadow_map(nullptr), skybox(nullptr)
 {
 	framebuffer = std::make_unique<FrameBuffer>(w, h);
 	depthbuffer = std::make_unique<DepthBuffer>(w, h);

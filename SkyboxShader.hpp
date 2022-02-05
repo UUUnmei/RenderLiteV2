@@ -66,8 +66,7 @@ public:
 
 		glm::vec4 operator()(const VSOut& v, int modelId, int meshId) const
 		{
-			glm::vec3 p = glm::normalize(v.pos);
-			glm::vec4 color = pContext->skybox->Sample(p.x, p.y, p.z);
+			glm::vec4 color = pContext->skybox->Sample(v.pos.x, v.pos.y, v.pos.z);
 			return color;
 		}
 	};
