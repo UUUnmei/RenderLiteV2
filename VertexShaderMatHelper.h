@@ -7,11 +7,12 @@
 class VertexShaderMatHelper
 {
 public:
-	glm::mat4 model = glm::mat4(1.0f);
-	glm::mat4 view = glm::mat4(1.0f);;
-	glm::mat4 proj = glm::mat4(1.0f);;
-	glm::mat4 proj_view = glm::mat4(1.0f);;
-	glm::mat4 it_view_model = glm::mat4(1.0f);;
+	glm::mat4 model{ 1.0f };
+	glm::mat4 view{ 1.0f };
+	glm::mat4 proj{ 1.0f };
+	glm::mat4 proj_view{ 1.0f };
+	glm::mat4 obj_to_view_normal{ 1.0f };  // it_view_model
+	glm::mat4 obj_to_world_normal{ 1.0f }; // UnityObjectToWorldNormal
 
 public:
 	void BindMatModel(const glm::mat4& mat);

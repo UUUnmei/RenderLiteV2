@@ -15,13 +15,11 @@ public:
 
 	struct VSOut {
 		glm::vec4 proj_pos;
-		glm::vec4 normal;
 		glm::vec2 texcoord;
 
 		VSOut& operator+=(const VSOut& rhs)
 		{
 			proj_pos += rhs.proj_pos;
-			normal += rhs.normal;
 			texcoord += rhs.texcoord;
 			return *this;
 		}
@@ -32,7 +30,6 @@ public:
 
 		VSOut& operator*=(float v) {
 			proj_pos *= v;
-			normal *= v;
 			texcoord *= v;
 			return *this;
 		}
@@ -43,7 +40,6 @@ public:
 
 		static VSOut Lerp(const VSOut& v0, const VSOut& v1, const VSOut& v2, float a, float b, float c) noexcept {
 			VSOut ret;
-			ret.normal = v0.normal * a + v1.normal * b + v2.normal * c;
 			ret.texcoord = v0.texcoord * a + v1.texcoord * b + v2.texcoord * c;
 			return ret;
 		}
@@ -57,7 +53,6 @@ public:
 		{
 			return {
 				proj_view * model * glm::vec4(v.position, 1.0f),
-				it_view_model * glm::vec4(v.normal, 0.0f),
 				v.texcoord
 			};
 		}

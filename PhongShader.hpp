@@ -62,7 +62,7 @@ public:
 			glm::vec4 world_pos = model * glm::vec4(v.position, 1.0f);
 			return {
 				proj_view * world_pos,
-				model * glm::vec4(v.normal, 0.0f),
+				obj_to_world_normal * glm::vec4(v.normal, 0.0f),
 				v.texcoord,
 				glm::vec3(world_pos)
 			};

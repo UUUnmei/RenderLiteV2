@@ -3,14 +3,15 @@
 void VertexShaderMatHelper::BindMatModel(const glm::mat4& mat)
 {
 	model = mat;
-	it_view_model = glm::transpose(glm::inverse(view * model));
+	obj_to_view_normal = glm::transpose(glm::inverse(view * model));
+	obj_to_world_normal = glm::transpose(glm::inverse(model));
 }
 
 void VertexShaderMatHelper::BindMatView(const glm::mat4& mat)
 {
 	view = mat;
 	proj_view = proj * view;
-	it_view_model = glm::transpose(glm::inverse(view * model));
+	obj_to_view_normal = glm::transpose(glm::inverse(view * model));
 }
 
 void VertexShaderMatHelper::BindMatProj(const glm::mat4& mat)
@@ -25,6 +26,7 @@ void VertexShaderMatHelper::BindAllMat(const glm::mat4& m, const glm::mat4& v, c
 	view = v;
 	proj = p;
 	proj_view = proj * view;
-	it_view_model = glm::transpose(glm::inverse(view * model));
+	obj_to_view_normal = glm::transpose(glm::inverse(view * model));
+	obj_to_world_normal = glm::transpose(glm::inverse(model));
 }
 
