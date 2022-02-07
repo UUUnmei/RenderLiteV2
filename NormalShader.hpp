@@ -70,16 +70,16 @@ public:
 
 		glm::vec4 operator()(const VSOut& v, int modelId, int meshId) const
 		{
-			//glm::vec3 color(v.normal.x, v.normal.y, v.normal.z);
-			//color = glm::normalize(color) * 0.5f + glm::vec3(0.5f);  //法线-1~1 -> 0~1 
-			//return glm::vec4(color, 1.0f);
+			glm::vec3 color(v.normal.x, v.normal.y, v.normal.z);
+			color = glm::normalize(color) * 0.5f + glm::vec3(0.5f);  //法线-1~1 -> 0~1 
+			return glm::vec4(color, 1.0f);
 
 			// skybox reflect in world space
-			glm::vec3 N = glm::normalize(glm::vec3(v.normal));
-			glm::vec3 I = glm::normalize(v.pos - pContext->camera_pos_cache);
-			glm::vec3 R = glm::reflect(I, N);
-			glm::vec4 color = pContext->skybox->Sample(R.x, R.y, R.z);
-			return color;
+			//glm::vec3 N = glm::normalize(glm::vec3(v.normal));
+			//glm::vec3 I = glm::normalize(v.pos - pContext->camera_pos_cache);
+			//glm::vec3 R = glm::reflect(I, N);
+			//glm::vec4 color = pContext->skybox->Sample(R.x, R.y, R.z);
+			//return color;
 
 			// skybox refract (only once) in world space 
 			//material	 η

@@ -35,6 +35,7 @@ Skybox::Skybox(const char* dir)
 		}
 		if (ok) {
 			faces[i] = Texture2D(str.string().c_str());
+			faces[i].mode = Texture2D::WrapMode::ClampToEdge;
 			std::cout << str.stem().string() << " load!\n";
 		}
 		else {

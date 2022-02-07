@@ -21,8 +21,8 @@ void CubeScene::Init()
 	std::shared_ptr<Skybox> sky = std::make_shared<Skybox>("D:\\Visual Studio\\RenderLiteV2\\obj\\skybox\\default\\");
 	context->AddSkybox( sky );
 
-	//context->AddIcoSphere(4.0f);
-	context->AddModel("obj/bunny.obj"); 
+	//context->AddCube(4.0f);
+	context->AddModel("obj/bunny.obj");
 	//context->AddPlane(100.0f)
 	//	.BindModelMat(glm::rotate(glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f)))
 	//	.BindModelTex("obj/uvchecker/1/4096x4096 Texel Density Texture 1.png");

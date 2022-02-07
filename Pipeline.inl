@@ -181,8 +181,8 @@ inline void Pipeline<Shader>::RasterizeTriangle(const VSOut& v0, const VSOut& v1
 	glm::mat2 interpTransform(vv1 - vv0, vv2 - vv0);
 	interpTransform = glm::inverse(interpTransform);
 
-	for (int j = miny; j <= maxy; ++j) {
-		for (int i = minx; i <= maxx; ++i) {
+	for (int j = miny; j <= maxy; ++j) {	
+		for (int i = minx; i <= maxx; ++i) {				
 			glm::vec2 current(i + 0.5f, j + 0.5f);
 			current  = interpTransform * (current - vv0);
 			glm::vec3 bary = glm::vec3(1 - current.x - current.y, current.x, current.y); // Barycentric

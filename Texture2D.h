@@ -9,6 +9,14 @@
 class Texture2D
 {
 	std::shared_ptr<Image> texture;  // 同一张纹理就别拷贝了
+	float invW;
+	float invH;
+public:
+	enum class WrapMode {
+		Repeat,
+		ClampToEdge
+	};
+	WrapMode mode;
 public:
 	Texture2D();
 	//Texture2D(const Texture2D&);
