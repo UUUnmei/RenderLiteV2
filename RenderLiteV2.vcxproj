@@ -177,6 +177,7 @@
     <ClCompile Include="CubeScene.cpp" />
     <ClCompile Include="DepthBuffer.cpp" />
     <ClCompile Include="DirectionalLight.cpp" />
+    <ClCompile Include="FPSCamera.cpp" />
     <ClCompile Include="PCSSScene.cpp" />
     <ClCompile Include="SceneContext.cpp" />
     <ClCompile Include="FrameBuffer.cpp" />
@@ -201,6 +202,7 @@
     <ClInclude Include="CubeScene.h" />
     <ClInclude Include="DepthBuffer.h" />
     <ClInclude Include="DirectionalLight.h" />
+    <ClInclude Include="FPSCamera.h" />
     <ClInclude Include="ICamera.h" />
     <ClInclude Include="PCSSScene.h" />
     <ClInclude Include="PhongShader.hpp">

@@ -84,6 +84,9 @@
     <ClCompile Include="Skybox.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="FPSCamera.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Window.h">
@@ -183,6 +186,9 @@
       <Filter>Shaders</Filter>
     </ClInclude>
     <ClInclude Include="ICamera.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="FPSCamera.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
