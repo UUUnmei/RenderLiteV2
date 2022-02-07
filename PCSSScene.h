@@ -1,7 +1,7 @@
 #pragma once
 
 #include "SceneBase.h"
-#include "OrbitCamera.h"
+#include "ICamera.h"
 #include "PCSS.hpp"
 #include "PhongWithShadow.hpp"
 #include "LightShader.hpp"
@@ -24,7 +24,7 @@ public:
     PCSSScene(uint32_t w, uint32_t h);
 
     // Í¨¹ý SceneBase ¼Ì³Ð
-    OrbitCamera& GetCamera() override;
+    ICamera& GetCamera() override;
     const unsigned char* GetFrameBuffer() const override;
     void Init() override;
     void Draw() override;

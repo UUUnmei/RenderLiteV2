@@ -47,7 +47,7 @@ Model& SceneContext::AddUVSphere(float scale, int lattDiv, int longDiv)
 	return *(models.back().get());
 }
 
-void SceneContext::AddCamera(std::shared_ptr<OrbitCamera> cam)
+void SceneContext::AddCamera(std::shared_ptr<ICamera> cam)
 {
 	camera = cam;
 }

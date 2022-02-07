@@ -1,25 +1,18 @@
 #pragma once
 
-#include <cstdint>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
-class ICamera;
-
-class SceneBase
-{
-	
+class ICamera {
 public:
-	uint32_t width;
-	uint32_t height;
+	virtual glm::vec3 GetCameraPosition() = 0;
+	virtual glm::mat4 GetView() = 0; 
+	virtual glm::mat4 GetProj() = 0;
 
-	virtual ~SceneBase() = default;
-	virtual ICamera& GetCamera() = 0;
-	virtual const unsigned char* GetFrameBuffer() const = 0;
-	virtual void Init() = 0;
-	virtual void Draw() = 0;
-	
 	virtual void OnKeyChanged(int key, int scanCode, int action, int mode) = 0;
 	virtual void OnMousePositionChanged(double xpos, double ypos) = 0;
 	virtual void OnMouseButtonChanged(int button, int action, int mode) = 0;
 	virtual void OnScrollChanged(double x, double y) = 0;
-};
 
+	virtual ~ICamera() = default;
+};

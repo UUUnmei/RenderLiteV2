@@ -1,7 +1,7 @@
 #pragma once
 
 #include "SceneBase.h"
-#include "OrbitCamera.h"
+#include "ICamera.h"
 #include "NormalShader.hpp"
 #include "SkyboxShader.hpp"
 #include "DiffuseShader.hpp"
@@ -23,7 +23,7 @@ public:
 
 	// Í¨¹ý SceneBase ¼Ì³Ð
 	const unsigned char* GetFrameBuffer() const override;
-	OrbitCamera& GetCamera() override;
+	ICamera& GetCamera() override;
 	void Init() override;
 	void Draw() override;
 

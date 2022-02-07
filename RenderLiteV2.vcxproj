@@ -201,6 +201,7 @@
     <ClInclude Include="CubeScene.h" />
     <ClInclude Include="DepthBuffer.h" />
     <ClInclude Include="DirectionalLight.h" />
+    <ClInclude Include="ICamera.h" />
     <ClInclude Include="PCSSScene.h" />
     <ClInclude Include="PhongShader.hpp">
       <SubType>

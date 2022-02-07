@@ -1,7 +1,7 @@
 #pragma once 
 
 #include "Model.h"
-#include "OrbitCamera.h"
+#include "ICamera.h"
 #include "DirectionalLight.h"
 #include "FrameBuffer.h"
 #include "DepthBuffer.h"
@@ -17,7 +17,7 @@ class SceneContext
 public: 
 	std::shared_ptr<Skybox> skybox;
 	std::shared_ptr<DirectionalLight> light;  // for now only consider one light
-	std::shared_ptr<OrbitCamera> camera;
+	std::shared_ptr<ICamera> camera;
 	std::vector<std::unique_ptr<Model>> models;
 
 public:
@@ -32,7 +32,7 @@ public:
 	Model& AddCube(float scale = 1.0f);
 	Model& AddIcoSphere(float scale, int div = 4); //Icosphere
 	Model& AddUVSphere(float scale, int lattDiv = 12, int longDiv = 24); //uvsphere
-	void AddCamera(std::shared_ptr<OrbitCamera> cam);
+	void AddCamera(std::shared_ptr<ICamera> cam);
 	void AddSkybox(std::shared_ptr<Skybox> sky);
 	void AddLight(std::shared_ptr<DirectionalLight> l);
 	// 如果后续支持多个光源的阴影的话，可以在context放shadowmap的vector，light里加一个字段存对应的map在vector中的下标

@@ -91,36 +91,6 @@ void Application::Init()
 	scene->Init();
 	SetCallBacks();
 	
-	//std::shared_ptr<OrbitCamera> cam = std::make_shared<OrbitCamera>(800, 600, glm::radians(45.0f), 800.0 / 600.0, 0.1, 1000.f);
-	//scene->AddCamera( cam );
-
-	// manually setup
-	// 1
-	//std::unique_ptr<Model> md = std::make_unique<Model>();
-	//md->LoadFromFile("obj/helmet.obj");
-	//std::shared_ptr<Texture2D> tex = std::make_shared<Texture2D>("obj/helmet_basecolor.png");
-	//std::shared_ptr<Material> mat = std::make_shared<Material>();
-	//mat->diffuse = tex;
-	//md->meshes[0].material_idx = 0;
-	//md->materials[0] = mat;
-	//scene->context->models.push_back( std::move(md) );
-	// 2
-	//auto& tmp = scene->AddModel("obj/nanosuit/nanosuit.obj");
-	//tmp.BindModelMat(glm::rotate(glm::mat4(1.0f), glm::radians(30.0f), glm::vec3(0.0f, 0.0f, 1.0f)));
-	//for (int i = 0; i < tmp.meshes.size(); ++i) {
-	//	tmp.meshes[i].material_idx ...
-	//}
-	// 3
-	//scene->AddModel("obj/spot.obj")
-	//	.BindModelMat(glm::rotate(glm::mat4(1.0f), glm::radians(30.0f), glm::vec3(0.0f, 0.0f, 1.0f)))
-	//	.BindModelTex("obj/spot_texture.png");
-
-
-	//scene->AddModel("obj/bunny.obj");
-	//scene->AddModel("obj/teapot.obj");
-	//scene->AddModel("obj/spot.obj");
-	//scene->AddModel("obj/Koenigsegg.obj");
-	
 }
 
 Application::Application(std::unique_ptr<SceneBase> demo_scene)

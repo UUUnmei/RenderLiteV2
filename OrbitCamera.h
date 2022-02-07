@@ -38,10 +38,9 @@ z
 
 */
 
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
+#include "ICamera.h"
 
-class OrbitCamera
+class OrbitCamera final : public ICamera
 {
 
 private:
@@ -73,21 +72,21 @@ public:
 	OrbitCamera(int width, int height, float fovY_rad, float ratio_wh, float near_z, float far_z);
 	void SetTarget(const glm::vec3& tar = glm::vec3(0.0f));
 
-	glm::mat4 GetView();  // 获取view transform矩阵
-	glm::mat4 GetProj();  // 获取透视变换矩阵
+	glm::mat4 GetView() override;  // 获取view transform矩阵
+	glm::mat4 GetProj() override;  // 获取透视变换矩阵
 
 
 	// 由鼠标、键盘控制
-	void OnKeyChanged(int key, int scanCode, int action, int mode);
-	void OnMousePositionChanged(double xpos, double ypos);
-	void OnMouseButtonChanged(int button, int action, int mode);
-	void OnScrollChanged(double x, double y);
+	void OnKeyChanged(int key, int scanCode, int action, int mode) override;
+	void OnMousePositionChanged(double xpos, double ypos) override;
+	void OnMouseButtonChanged(int button, int action, int mode) override;
+	void OnScrollChanged(double x, double y) override;
 
 	
 	// 恢复默认位置
 	void reset(void);
 
-	glm::vec3 GetCameraPosition();
+	glm::vec3 GetCameraPosition() override;
 
 private:
 	void update_phi_theta(float x, float y);

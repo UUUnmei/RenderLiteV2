@@ -1,5 +1,5 @@
 #include "PCSSScene.h"
-
+#include "OrbitCamera.h"
 PCSSScene::PCSSScene(uint32_t w, uint32_t h)
 	: context(std::make_shared<SceneContext>(w, h))
 {
@@ -7,7 +7,7 @@ PCSSScene::PCSSScene(uint32_t w, uint32_t h)
 	height = h;
 }
 
-OrbitCamera& PCSSScene::GetCamera()
+ICamera& PCSSScene::GetCamera()
 {
 	return *context->camera;
 }
@@ -19,7 +19,7 @@ const unsigned char* PCSSScene::GetFrameBuffer() const
 
 void PCSSScene::Init()
 {
-	std::shared_ptr<OrbitCamera> cam = std::make_shared<OrbitCamera>(width, height, glm::radians(45.0f), width * 1.0f / height, 0.1, 1000.f);
+	std::shared_ptr<ICamera> cam = std::make_shared<OrbitCamera>(width, height, glm::radians(45.0f), width * 1.0f / height, 0.1, 1000.f);
 	context->AddCamera(cam);
 	std::shared_ptr<DirectionalLight> light = std::make_shared<DirectionalLight>();
 	light->WithPosition(glm::vec3(200.0f, 200.0f, 200.0f))
