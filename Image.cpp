@@ -13,6 +13,12 @@ Image::Image()
 	: Buffer(), width(0), height(0), bpp(0)
 {  }
 
+Image::Image(uint32_t w, uint32_t h, uint32_t b)
+	: Buffer(w* h * b), width(w), height(h), bpp(b)
+{
+	std::cout << "[IMAGE] buffer allocate length: " << length << '\n';
+}
+
 Image::Image(const char* file)
 	: Buffer()
 { 
@@ -32,6 +38,11 @@ const int Image::GetWidth() const noexcept
 const int Image::GetHeight() const noexcept
 {
 	return height;
+}
+
+const int Image::GetBpp() const noexcept
+{
+	return bpp;
 }
 
 bool Image::read(uint32_t x, uint32_t y, glm::vec4& color)
@@ -70,6 +81,7 @@ bool Image::write(uint32_t x, uint32_t y, const glm::vec4& color)
 void Image::Dump(const char* outputname, int w, int h, int bpp, const unsigned char* data)
 {
 	stbi_write_png(outputname, w, h, bpp, data, 0);
+	std::cout << "DUMP success " << outputname << '\n';
 }
 
 

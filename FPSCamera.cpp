@@ -81,13 +81,13 @@ glm::mat4 FPSCamera::GetProj()
     return glm::perspective(fovY_rad, ratio_wh, near_z, far_z);
 }	
 
-#define UPDATE(mov, scan) \
-	if (key == scan) {   \
-		if (action == GLFW_PRESS)	\ 
-			mov = true;		\
-		else if (action == GLFW_RELEASE)	\
-			mov = false;			\
-	}			\
+#define UPDATE(mov, scan)		\
+	if (key == scan) {			\
+		if (action == GLFW_PRESS)		\
+			mov = true;					\
+		else if (action == GLFW_RELEASE)		\
+			mov = false;				\
+	}									\
 
 void FPSCamera::OnKeyChanged(int key, int scanCode, int action, int mode)
 {
