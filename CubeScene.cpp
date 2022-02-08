@@ -22,8 +22,8 @@ void CubeScene::Init()
 	//cam->SetDirection(1, 1, 1);
 	context->AddCamera( cam );
 	
-	std::shared_ptr<Skybox> sky = std::make_shared<Skybox>("D:\\Visual Studio\\RenderLiteV2\\obj\\skybox\\default\\");
-	context->AddSkybox( sky );
+	//std::shared_ptr<Skybox> sky = std::make_shared<Skybox>("D:\\Visual Studio\\RenderLiteV2\\obj\\skybox\\default\\");
+	//context->AddSkybox( sky );
 
 	//context->AddCube(4.0f);
 	//context->AddModel("obj/bunny.obj");
@@ -56,8 +56,8 @@ void CubeScene::Draw()
 	drender.GetShader().vs.BindMatView(context->camera_view_cache);
 	drender.Draw(0);
 
-	skyrender.GetShader().vs.BindMatView(context->camera_view_cache);
-	skyrender.DrawMesh(context->skybox->mesh);
+	//skyrender.GetShader().vs.BindMatView(context->camera_view_cache);
+	//skyrender.DrawMesh(context->skybox->mesh);
 
 }
 

@@ -26,7 +26,7 @@ Image::Image(const char* file)
 	data = stbi_load(file, &width, &height, &bpp, 0);
 	length = width * height * bpp;
 	assert(length == (uint64_t)length); // 应该不会超32位的范围，在这检测其实好像有点晚了。。
-	
+	assert(data);
 	std::cout << "[IMAGE] buffer allocate length: " << length << '\n';
 }
 

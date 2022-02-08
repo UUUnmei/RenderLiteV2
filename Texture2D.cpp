@@ -1,5 +1,6 @@
 #include "Texture2D.h"
 
+#include <algorithm>
 
 namespace {
 	bool is_power_of_2(int x) {
@@ -87,16 +88,51 @@ glm::vec4 Texture2D::Sample(float x, float y)
 		y = std::min(1.0f - invH, std::max(invH, y));
 	}
 
-	if (smode == SampleMode::Nearst) {
+	if (is_mipmap_enable) {
+
+	}
+	else if (smode == SampleMode::Nearst) {
 		texture->read(x * texture->GetWidth() + 0.5f, (1 - y) * texture->GetHeight() + 0.5f, color);
 	}
-	else if (smode == SampleMode::Bilinear) {
-
-	}
 	else {
-		// mipmap
+		// smode == SampleMode::Bilinear
+		/*
+			   dx = (a - c11) / (c21 - c11) , dy = (c - c11) / (c12 - c11)
+			c11---- a ---- c21
+		  dy|		|		|
+			|------ c -----	|
+			|		|		|
+			|		|		|
+			c12---- b ---- c22
 
+			a = c11 + (c21 - c11) * dx;
+			b = c12 + (c22 - c12) * dx;
+			c = a + (b - a) * dy;
+		==>
+			c = (1 - dx)(1 - dy) * c11 + (1 - dx)dy * c12
+			  + (1 - dy)dx * c21 + dxdy * c22
+
+		*/
+		x = x * texture->GetWidth() + 0.5f;
+		y = (1 - y) * texture->GetHeight() + 0.5f;
+		int x1 = (int)x;
+		int x2 = std::min(texture->GetWidth() - 1, (int)(x + 1));
+		int y1 = (int)y;
+		int y2 = std::min(texture->GetHeight() - 1, (int)(y + 1));
+
+		glm::vec4 colors[4];
+		texture->read(x1, y1, colors[0]);
+		texture->read(x2, y1, colors[1]);
+		texture->read(x1, y2, colors[2]);
+		texture->read(x2, y2, colors[3]);
+
+		float dx = (float)(x - x1);// / (x2 - x1); //around 1 
+		float dy = (float)(y - y1);// / (y2 - y1);
+		glm::vec4 a = colors[0] + (colors[1] - colors[0]) * dx;
+		glm::vec4 b = colors[2] + (colors[3] - colors[2]) * dx;
+		color = a + (b - a) * dy;
 	}
+	
 	
 	return color;
 }
