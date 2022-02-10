@@ -89,7 +89,8 @@ glm::vec4 Texture2D::Sample(float x, float y)
 	}
 
 	if (is_mipmap_enable) {
-
+	//! see test_mipmap branch
+		texture->read(x * texture->GetWidth() + 0.5f, (1 - y) * texture->GetHeight() + 0.5f, color);
 	}
 	else if (smode == SampleMode::Nearst) {
 		texture->read(x * texture->GetWidth() + 0.5f, (1 - y) * texture->GetHeight() + 0.5f, color);

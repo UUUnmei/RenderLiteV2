@@ -35,10 +35,8 @@ public:
 			return VSOut(*this) *= rhs;
 		}
 
-		static VSOut Lerp(const VSOut& v0, const VSOut& v1, const VSOut& v2, float a, float b, float c) noexcept {
-			VSOut ret;
-			ret.proj_pos = v0.proj_pos * a + v1.proj_pos * b + v2.proj_pos * c;
-			return ret;
+		void Lerp(const VSOut& v0, const VSOut& v1, const VSOut& v2, float a, float b, float c) noexcept {
+			proj_pos = v0.proj_pos * a + v1.proj_pos * b + v2.proj_pos * c;
 		}
 
 	};

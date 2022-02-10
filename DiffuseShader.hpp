@@ -38,10 +38,8 @@ public:
 			return VSOut(*this) *= rhs;
 		}
 
-		static VSOut Lerp(const VSOut& v0, const VSOut& v1, const VSOut& v2, float a, float b, float c) noexcept {
-			VSOut ret;
-			ret.texcoord = v0.texcoord * a + v1.texcoord * b + v2.texcoord * c;
-			return ret;
+		void Lerp(const VSOut& v0, const VSOut& v1, const VSOut& v2, float a, float b, float c) noexcept {
+			texcoord = v0.texcoord * a + v1.texcoord * b + v2.texcoord * c;	
 		}
 
 	};

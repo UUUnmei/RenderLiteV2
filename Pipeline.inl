@@ -212,7 +212,7 @@ inline void Pipeline<Shader>::RasterizeTriangle(const VSOut& v0, const VSOut& v1
 					//v2f.normal = v0.normal * bary.x + v1.normal * bary.y + v2.normal * bary.z;
 					//v2f.texcoord = v0.texcoord * bary.x + v1.texcoord * bary.y + v2.texcoord * bary.z;
 					// 3、 函数。目前看来算是取得了一点平衡
-					v2f = VSOut::Lerp(v0, v1, v2, bary.x, bary.y, bary.z);
+					v2f.Lerp(v0, v1, v2, bary.x, bary.y, bary.z);
 					// 4、 反射？？
 
 
