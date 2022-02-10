@@ -106,7 +106,7 @@ void Model::LoadTypeTexture(std::shared_ptr<Material> our_mat, aiTextureType typ
 	
 		Texture2D tex(path.c_str());
 		textures[path] = tex;
-		
+		tex.EnableMipmap();
 		our_mat->Set(type, std::make_shared<Texture2D>(tex));  // 给material和texture建立联系
 	}
 }
@@ -151,6 +151,7 @@ Model& Model::BindModelMat(const glm::mat4& mat)
 Model& Model::BindModelTex(const char* path)
 {
 	std::shared_ptr<Texture2D> tex = std::make_shared<Texture2D>(path);
+	tex->EnableMipmap();
 	tex->smode = Texture2D::SampleMode::Bilinear;
 	std::shared_ptr<Material> mat = std::make_shared<Material>();
 	mat->diffuse = tex;

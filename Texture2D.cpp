@@ -65,6 +65,19 @@ Texture2D::Texture2D()
 //	return *this;
 //}
 
+namespace {
+	const std::vector<glm::vec4> TESTCOLORS{
+		{1.0f, 1.0f, 1.0f, 1.0f},
+		{1.0f, 0.0f, 0.0f, 1.0f},
+		{0.0f, 1.0f, 0.0f, 1.0f},
+		{0.0f, 0.0f, 1.0f, 1.0f},
+		{1.0f, 1.0f, 0.0f, 1.0f},
+		{0.0f, 1.0f, 1.0f, 1.0f},
+		{1.0f, 0.0f, 1.0f, 1.0f},
+		{0.4f, 0.4f, 0.4f, 1.0f}
+	};
+}
+
 Texture2D::Texture2D(const char* file)
 	: texture(std::make_shared<Image>(file))
 {
@@ -74,7 +87,17 @@ Texture2D::Texture2D(const char* file)
 	smode = SampleMode::Nearst;
 }
 
-glm::vec4 Texture2D::Sample(float x, float y)
+const int Texture2D::GetWidth() const noexcept
+{
+	return texture->GetWidth();
+}
+
+const int Texture2D::GetHeight() const noexcept
+{
+	return texture->GetHeight();
+}
+
+glm::vec4 Texture2D::Sample(float x, float y, float level)
 {
 	glm::vec4 color(0, 0, 0, 1);
 
@@ -89,14 +112,52 @@ glm::vec4 Texture2D::Sample(float x, float y)
 	}
 
 	if (is_mipmap_enable) {
-
+/*
+* 注
+* 计算偏导数系数ddx/ddy时，依赖的是三角形的三个顶点
+* 而不是像GPU那样在2*2的屏幕像素范围中计算差分
+* 所以这里mipmap的效果在三角形很少的时候并不太好
+* 比如两个三角形拼出来的平面
+*/
+		level = std::max(0.0f, level);
+		int d1 = int(level);
+		int d2 = d1 + 1;
+		assert(d1 >= 0);
+		assert(d2 < mips.size());
+// #define MIPMAP_TEST
+#ifdef MIPMAP_TEST
+		d2 = std::min(d2, 7);
+		d1 = std::min(d1, 7);
+#else
+		d2 = std::min(d2, int(mips.size() - 1));
+		d1 = std::min(d1, int(mips.size() - 1));
+#endif 
+		float a = d2 - level;
+		float b = 1 - a;
+#ifdef MIPMAP_TEST
+		glm::vec4 c1 = TESTCOLORS[d1];
+		glm::vec4 c2 = TESTCOLORS[d2];
+#else
+		glm::vec4 c1 = BilinearSampling(mips[d1], x, y);
+		glm::vec4 c2 = BilinearSampling(mips[d2], x, y);
+#endif 
+		color = c1 * a + c2 * b;
 	}
 	else if (smode == SampleMode::Nearst) {
 		texture->read(x * texture->GetWidth() + 0.5f, (1 - y) * texture->GetHeight() + 0.5f, color);
 	}
 	else {
 		// smode == SampleMode::Bilinear
-		/*
+		color = BilinearSampling(texture, x, y);
+	}
+	
+	
+	return color;
+}
+
+glm::vec4 Texture2D::BilinearSampling(std::shared_ptr<Image> src, float x, float y)
+{
+	/*
 			   dx = (a - c11) / (c21 - c11) , dy = (c - c11) / (c12 - c11)
 			c11---- a ---- c21
 		  dy|		|		|
@@ -113,26 +174,22 @@ glm::vec4 Texture2D::Sample(float x, float y)
 			  + (1 - dy)dx * c21 + dxdy * c22
 
 		*/
-		x = x * texture->GetWidth() + 0.5f;
-		y = (1 - y) * texture->GetHeight() + 0.5f;
-		int x1 = (int)x;
-		int x2 = std::min(texture->GetWidth() - 1, (int)(x + 1));
-		int y1 = (int)y;
-		int y2 = std::min(texture->GetHeight() - 1, (int)(y + 1));
+	x = x * src->GetWidth() + 0.5f;
+	y = (1 - y) * src->GetHeight() + 0.5f;
+	int x1 = (int)x;
+	int x2 = std::min(src->GetWidth() - 1, (int)(x + 1));
+	int y1 = (int)y;
+	int y2 = std::min(src->GetHeight() - 1, (int)(y + 1));
 
-		glm::vec4 colors[4];
-		texture->read(x1, y1, colors[0]);
-		texture->read(x2, y1, colors[1]);
-		texture->read(x1, y2, colors[2]);
-		texture->read(x2, y2, colors[3]);
+	glm::vec4 colors[4];
+	src->read(x1, y1, colors[0]);
+	src->read(x2, y1, colors[1]);
+	src->read(x1, y2, colors[2]);
+	src->read(x2, y2, colors[3]);
 
-		float dx = (float)(x - x1);// / (x2 - x1); //around 1 
-		float dy = (float)(y - y1);// / (y2 - y1);
-		glm::vec4 a = colors[0] + (colors[1] - colors[0]) * dx;
-		glm::vec4 b = colors[2] + (colors[3] - colors[2]) * dx;
-		color = a + (b - a) * dy;
-	}
-	
-	
-	return color;
+	float dx = (float)(x - x1);// / (x2 - x1); //around 1 
+	float dy = (float)(y - y1);// / (y2 - y1);
+	glm::vec4 a = colors[0] + (colors[1] - colors[0]) * dx;
+	glm::vec4 b = colors[2] + (colors[3] - colors[2]) * dx;
+	return a + (b - a) * dy;
 }

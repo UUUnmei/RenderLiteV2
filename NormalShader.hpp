@@ -41,11 +41,13 @@ public:
 			return VSOut(*this) *= rhs;
 		}
 
-		static VSOut Lerp(const VSOut& v0, const VSOut& v1, const VSOut& v2, float a, float b, float c) noexcept {
-			VSOut ret;
-			ret.normal = v0.normal * a + v1.normal * b + v2.normal * c;
-			ret.pos = v0.pos * a + v1.pos * b + v2.pos * c;
-			return ret;
+		void Lerp(const VSOut& v0, const VSOut& v1, const VSOut& v2, float a, float b, float c) noexcept {
+			normal = v0.normal * a + v1.normal * b + v2.normal * c;
+			pos = v0.pos * a + v1.pos * b + v2.pos * c;
+		}
+
+		void LerpWithDerivatives(const VSOut& v0, const VSOut& v1, const VSOut& v2, const glm::vec3& ddx, const glm::vec3& ddy) noexcept {
+
 		}
 	};
 

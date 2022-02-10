@@ -48,14 +48,16 @@ public:
 			return VSOut(*this) *= rhs;
 		}
 
-		static VSOut Lerp(const VSOut& v0, const VSOut& v1, const VSOut& v2, float a, float b, float c) noexcept {
-			VSOut ret;
-			ret.proj_pos = v0.proj_pos * a + v1.proj_pos * b + v2.proj_pos * c;
-			ret.normal = v0.normal * a + v1.normal * b + v2.normal * c;
-			ret.texcoord = v0.texcoord * a + v1.texcoord * b + v2.texcoord * c;
-			ret.world_pos = v0.world_pos * a + v1.world_pos * b + v2.world_pos * c;
-			ret.pos_from_light = v0.pos_from_light * a + v1.pos_from_light * b + v2.pos_from_light * c;
-			return ret;
+		void Lerp(const VSOut& v0, const VSOut& v1, const VSOut& v2, float a, float b, float c) noexcept {
+			proj_pos = v0.proj_pos * a + v1.proj_pos * b + v2.proj_pos * c;
+			normal = v0.normal * a + v1.normal * b + v2.normal * c;
+			texcoord = v0.texcoord * a + v1.texcoord * b + v2.texcoord * c;
+			world_pos = v0.world_pos * a + v1.world_pos * b + v2.world_pos * c;
+			pos_from_light = v0.pos_from_light * a + v1.pos_from_light * b + v2.pos_from_light * c;
+		}
+
+		void LerpWithDerivatives(const VSOut& v0, const VSOut& v1, const VSOut& v2, const glm::vec3& ddx, const glm::vec3& ddy) noexcept {
+
 		}
 
 	};

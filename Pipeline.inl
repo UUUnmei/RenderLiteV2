@@ -143,11 +143,15 @@ inline void Pipeline<Shader>::ProcessTriangle(const VSOut& v0, const VSOut& v1, 
 template<class Shader>
 inline void Pipeline<Shader>::PostProcessTriangle(const VSOut& v0, const VSOut& v1, const VSOut& v2)
 {
-	VSOut vv0 = DivideAndTransform(v0);
-	VSOut vv1 = DivideAndTransform(v1);
-	VSOut vv2 = DivideAndTransform(v2);
-
+	VSOut vv0 = PerspectiveDivide(v0);
+	VSOut vv1 = PerspectiveDivide(v1);
+	VSOut vv2 = PerspectiveDivide(v2);
+	
 	if (config.draw_mode == ConfigParams::DrawMode::WireFrame) {
+		ViewportTransform(vv0.proj_pos);
+		ViewportTransform(vv1.proj_pos);
+		ViewportTransform(vv2.proj_pos);
+
 		static const glm::vec4 color(1.0f);
 		DrawLine(vv0.proj_pos.x, vv0.proj_pos.y, vv1.proj_pos.x, vv1.proj_pos.y, color);
 		DrawLine(vv1.proj_pos.x, vv1.proj_pos.y, vv2.proj_pos.x, vv2.proj_pos.y, color);
@@ -156,13 +160,18 @@ inline void Pipeline<Shader>::PostProcessTriangle(const VSOut& v0, const VSOut& 
 	else {
 		RasterizeTriangle(vv0, vv1, vv2);
 	}
-	
 }
 
 
 template<class Shader>
-inline void Pipeline<Shader>::RasterizeTriangle(const VSOut& v0, const VSOut& v1, const VSOut& v2)
+inline void Pipeline<Shader>::RasterizeTriangle(VSOut& v0, VSOut& v1, VSOut& v2)
 {
+	glm::vec3 coef_ddx, coef_ddy;
+	CalPartialDerivativesCoef(v0.proj_pos, v1.proj_pos, v2.proj_pos, coef_ddx, coef_ddy);
+	ViewportTransform(v0.proj_pos);
+	ViewportTransform(v1.proj_pos);
+	ViewportTransform(v2.proj_pos);
+
 	glm::vec2 vv0(v0.proj_pos.x, v0.proj_pos.y);
 	glm::vec2 vv1(v1.proj_pos.x, v1.proj_pos.y);
 	glm::vec2 vv2(v2.proj_pos.x, v2.proj_pos.y);
@@ -212,9 +221,11 @@ inline void Pipeline<Shader>::RasterizeTriangle(const VSOut& v0, const VSOut& v1
 					//v2f.normal = v0.normal * bary.x + v1.normal * bary.y + v2.normal * bary.z;
 					//v2f.texcoord = v0.texcoord * bary.x + v1.texcoord * bary.y + v2.texcoord * bary.z;
 					// 3、 函数。目前看来算是取得了一点平衡
-					v2f = VSOut::Lerp(v0, v1, v2, bary.x, bary.y, bary.z);
+					v2f.Lerp(v0, v1, v2, bary.x, bary.y, bary.z);
 					// 4、 反射？？
 
+					// 插值计算需要的偏导数
+					v2f.LerpWithDerivatives(v0, v1, v2, coef_ddx, coef_ddy);
 
 					// 如果DivideAndTransform把其他属性也除w 那这里就要恢复（在插值后）
 					//const float w = 1.0f / v2f.proj_pos.w;   
@@ -226,32 +237,9 @@ inline void Pipeline<Shader>::RasterizeTriangle(const VSOut& v0, const VSOut& v1
 	}
 }
 
-
-// 关于下面这个函数的返回值写法，可参见C++ Primer（第五版中文）P593 -- 使用类的类型成员
-// 在编译期，编译器还不知道 T::sth是个类型 还是是 T中的某个static成员
-// 所以 显式typename的目的就是告诉编译器 T::sth 是个类型 而不是 T中的某个static成员 ！
-template<class Shader>
-inline typename Pipeline<Shader>::VSOut    // 这个返回类型的写法有必要单拎出来看看。。。
-Pipeline<Shader>::DivideAndTransform(const VSOut& v)
-{
-	VSOut ret = v;
-
-	float invW = 1.0f / ret.proj_pos.w;
-	ret.proj_pos *= invW;  // ！shader中对于VSOut要根据需要重载*=，（也包含了坐标齐次化）
-
-	ret.proj_pos.x = (1.0f + ret.proj_pos.x) * pContext->GetRenderTarget()->GetWidth() * 0.5f;
-	ret.proj_pos.y = (1.0f - ret.proj_pos.y) * pContext->GetRenderTarget()->GetHeight() * 0.5f;
-	//  -1 <= z <= 1 
-	ret.proj_pos.z = (1.0f + ret.proj_pos.z) * 0.5; // 0 <= z <= 1;
-
-	// 把 1/w 放在w处，用于插值时恢复
-	ret.proj_pos.w = invW;
-
-	return ret;
-}
-
 // 对于四维向量叉乘
-static inline glm::vec4 Cross(const glm::vec4& v0, const glm::vec4& v1) {
+static inline glm::vec4 Cross(const glm::vec4& v0, const glm::vec4& v1) 
+{
 	glm::vec3 vv0 = glm::vec3(v0.x, v0.y, v0.z);
 	glm::vec3 vv1 = glm::vec3(v1.x, v1.y, v1.z);
 	glm::vec3 res = glm::cross(vv0, vv1);
@@ -374,4 +362,42 @@ inline void Pipeline<Shader>::DrawLine(const int x0, const int y0, const int x1,
 			error += abs_d[errorIsTooBig];
 		}
 	}
+}
+
+template<class Shader>
+inline typename Pipeline<Shader>::VSOut
+Pipeline<Shader>::PerspectiveDivide(const VSOut& v)
+{
+	VSOut ret = v;
+	float invW = 1.0f / ret.proj_pos.w;
+	ret.proj_pos *= invW;
+	ret.proj_pos.w = invW;
+	return ret;
+}
+
+template<class Shader>
+inline void Pipeline<Shader>::ViewportTransform(glm::vec4& v)
+{
+	v.x = (1.0f + v.x) * pContext->GetRenderTarget()->GetWidth() * 0.5f;
+	v.y = (1.0f - v.y) * pContext->GetRenderTarget()->GetHeight() * 0.5f;
+	//  -1 <= z <= 1 
+	v.z = (1.0f + v.z) * 0.5; // 0 <= z <= 1
+}
+
+template<class Shader>
+inline void Pipeline<Shader>::CalPartialDerivativesCoef(const glm::vec2& ndc0, const glm::vec2& ndc1, const glm::vec2& ndc2,
+	glm::vec3& coef_ddx, glm::vec3& coef_ddy)
+{
+	// prepare for calcuate Partial Derivatives
+	// reference
+	// http://filmicworlds.com/blog/visibility-buffer-rendering-with-material-graphs/
+	// https://cg.ivd.kit.edu/publications/2015/dais/DAIS.pdf
+
+	float invDet = 1.0f / glm::determinant(glm::mat2(ndc2 - ndc1, ndc0 - ndc1));
+	coef_ddx = glm::vec3(ndc1.y - ndc2.y, ndc2.y - ndc0.y, ndc0.y - ndc1.y) * invDet;
+	coef_ddy = glm::vec3(ndc2.x - ndc1.x, ndc0.x - ndc2.x, ndc1.x - ndc0.x) * invDet;
+
+	coef_ddx *= (2.0f / pContext->GetRenderTarget()->GetWidth());
+	coef_ddy *= (-2.0f / pContext->GetRenderTarget()->GetHeight());
+
 }

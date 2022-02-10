@@ -23,7 +23,7 @@ public:
 public:
 	// cache for each frame
 	glm::vec3 camera_pos_cache; 
-	glm::mat4 camera_view_cache; 
+	glm::mat4 camera_view_cache;
 
 public:
 	SceneContext(uint32_t w, uint32_t h);

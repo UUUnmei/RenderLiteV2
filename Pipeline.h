@@ -45,12 +45,16 @@ private:
 	// + 透视除法
 	void PostProcessTriangle(const VSOut& v0, const VSOut& v1, const VSOut& v2);
 	// 三角形光栅化，调用pixel shader
-	void RasterizeTriangle(const VSOut& v0, const VSOut& v1, const VSOut& v2);
+	void RasterizeTriangle(VSOut& v0, VSOut& v1, VSOut& v2);
 	void DrawLine(const int x0, const int y0, const int x1, const int y1, const glm::vec4& color);
 
 
 	// 透视除法，并变换到到屏幕空间
-	VSOut DivideAndTransform(const VSOut& v);
+	VSOut PerspectiveDivide(const VSOut& v);
+	void ViewportTransform(glm::vec4& v);
+	// 准备计算偏导数
+	void CalPartialDerivativesCoef(const glm::vec2& ndc0, const glm::vec2& ndc1, const glm::vec2& ndc2,
+		glm::vec3& coef_ddx, glm::vec3& coef_ddy);
 	// 背面剔除，认为逆时针为正面  为真表示不剔除
 	bool FaceCullCCW(const glm::vec4& v0, const glm::vec4& v1, const glm::vec4& v2);
 	// 背面剔除，认为顺时针为正面  为真表示不剔除
