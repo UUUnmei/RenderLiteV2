@@ -28,6 +28,11 @@ void Model::ParseMesh(aiMesh* mesh, const aiScene* scene)
 	vertices.reserve(mesh->mNumVertices);
 	indices.reserve(mesh->mNumFaces * 3);
 
+	bool has_normal = (mesh->mNormals != nullptr);
+	bool has_texcoord = (mesh->mTextureCoords[0] != nullptr);
+	bool has_tangent = (mesh->mTangents != nullptr);
+	bool has_bitangent = (mesh->mBitangents != nullptr);
+	
 	// vertices && normal && texcoord
 	for (unsigned i = 0; i < mesh->mNumVertices; ++i) {
 		Vertex v;
@@ -35,16 +40,27 @@ void Model::ParseMesh(aiMesh* mesh, const aiScene* scene)
 		v.position.y = mesh->mVertices[i].y;
 		v.position.z = mesh->mVertices[i].z;
 
-		v.normal.x = mesh->mNormals[i].x;
-		v.normal.y = mesh->mNormals[i].y;
-		v.normal.z = mesh->mNormals[i].z;
+		if (has_normal) {
+			v.normal.x = mesh->mNormals[i].x;
+			v.normal.y = mesh->mNormals[i].y;
+			v.normal.z = mesh->mNormals[i].z;
+		}
 
-		if (mesh->HasTextureCoords(0)) {
+		if (has_texcoord) {
 			v.texcoord.x = mesh->mTextureCoords[0][i].x;
 			v.texcoord.y = mesh->mTextureCoords[0][i].y;
 		}
-		else {
-			v.texcoord = glm::vec2(0);
+
+		if (has_tangent) {
+			v.tangent.x = mesh->mTangents[i].x;
+			v.tangent.y = mesh->mTangents[i].y;
+			v.tangent.z = mesh->mTangents[i].z;
+		}
+
+		if (has_bitangent) {
+			v.bitangent.x = mesh->mBitangents[i].x;
+			v.bitangent.y = mesh->mBitangents[i].y;
+			v.bitangent.z = mesh->mBitangents[i].z;
 		}
 
 		vertices.emplace_back(v);
@@ -58,6 +74,16 @@ void Model::ParseMesh(aiMesh* mesh, const aiScene* scene)
 		indices.emplace_back(face.mIndices[0]);
 		indices.emplace_back(face.mIndices[1]);
 		indices.emplace_back(face.mIndices[2]);
+	}
+
+	if (!has_normal)
+	{
+		ComputeNormal(vertices, indices);
+	}
+
+	if ((!has_tangent || !has_bitangent) && has_texcoord)
+	{
+		ComputeTangent(vertices, indices);
 	}
 
 	meshes.emplace_back(vertices, indices, mesh->mMaterialIndex);
@@ -142,6 +168,77 @@ void Model::LoadParams(std::shared_ptr<Material> our_mat, ColorType type, aiMate
 	
 }
 
+void Model::ComputeNormal(std::vector<Vertex>& v, const std::vector<uint32_t>& idx)
+{
+	for (int i = 0; i < idx.size(); i += 3) {
+		auto& v0 = v[idx[i + 0]];
+		auto& v1 = v[idx[i + 1]];
+		auto& v2 = v[idx[i + 2]];
+
+		glm::vec3 n = glm::cross(v1.position - v0.position, v2.position - v0.position);
+		
+		v0.normal += n;  //when vertex is shared, average this attr
+		v1.normal += n;
+		v2.normal += n;
+	}
+	for (auto& x : v)
+		x.normal = glm::normalize(x.normal);
+		
+}
+
+void Model::ComputeTangent(std::vector<Vertex>& v, const std::vector<uint32_t>& idx)
+{
+// reference
+// https://learnopengl-cn.github.io/05%20Advanced%20Lighting/04%20Normal%20Mapping/
+// https://github.com/gongminmin/GoldenSun/blob/main/Source/DevHelper/Source/MeshHelper.cpp
+
+	for (int i = 0; i < idx.size(); i += 3) {
+		auto& v0 = v[idx[i + 0]];
+		auto& v1 = v[idx[i + 1]];
+		auto& v2 = v[idx[i + 2]];
+
+		glm::vec3 e1 = v1.position - v0.position;
+		glm::vec3 e2 = v2.position - v0.position;
+
+		glm::vec2 dudv1 = v1.texcoord - v0.texcoord;
+		glm::vec2 dudv2 = v2.texcoord - v0.texcoord;
+
+		glm::vec3 tangent, bitangent;
+
+		float D = dudv1.x * dudv2.y - dudv2.x * dudv1.y;
+		if (std::abs(D) < std::numeric_limits<float>::epsilon())
+		{
+			tangent = glm::vec3(1, 0, 0);
+			bitangent = glm::vec3(0, 1, 0);
+		}
+		else
+		{
+			tangent = (dudv2.y * e1 - dudv1.y * e2) / D;
+			bitangent = (dudv1.x * e1 - dudv2.x * e2) / D;
+		}
+
+		v0.tangent += tangent;
+		v0.bitangent += bitangent;
+		v1.tangent += tangent;
+		v1.bitangent += bitangent;
+		v2.tangent += tangent;
+		v2.bitangent += bitangent;
+	}
+
+	for (auto& x : v) {
+
+		// Gram-Schmidt orthogonalize
+		x.tangent = glm::normalize(x.tangent - glm::dot(x.tangent, x.normal) * x.normal);
+
+		glm::vec3 bitangent = glm::cross(x.normal, x.tangent);
+		// make sure right-handed coordinate
+		if (glm::dot(bitangent, x.bitangent) < 0.0f) {
+			bitangent = -bitangent;
+		}
+		x.bitangent = bitangent;
+	}
+}
+
 Model& Model::BindModelMat(const glm::mat4& mat)
 {
 	model_matrix = mat;
@@ -151,7 +248,7 @@ Model& Model::BindModelMat(const glm::mat4& mat)
 Model& Model::BindModelTex(const char* path)
 {
 	std::shared_ptr<Texture2D> tex = std::make_shared<Texture2D>(path);
-	tex->smode = Texture2D::SampleMode::Bilinear;
+	//tex->smode = Texture2D::SampleMode::Bilinear;
 	std::shared_ptr<Material> mat = std::make_shared<Material>();
 	mat->diffuse = tex;
 	for (auto& mesh : meshes)
@@ -164,10 +261,12 @@ void Model::LoadFromFile(const std::string& obj_path)
 {
 	Assimp::Importer imp;
 	auto model = imp.ReadFile(obj_path,
+		aiProcess_ValidateDataStructure |
 		aiProcess_OptimizeMeshes |
 		aiProcess_Triangulate |
-		aiProcess_JoinIdenticalVertices |
-		aiProcess_GenNormals				// 如果读的文件里没有法线就自动生成
+		aiProcess_JoinIdenticalVertices
+		//aiProcess_CalcTangentSpace   // 计算tangent\bitangent
+		//aiProcess_GenNormals				// 如果读的文件里没有法线就自动生成
 	);
 
 	// check for errors

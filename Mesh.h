@@ -11,7 +11,7 @@ public:
 	std::vector<uint32_t> indices;
 	int material_idx; 
 public:
-	Mesh(const std::vector<Vertex> v, const std::vector<uint32_t> i, int material_idx);
+	Mesh(const std::vector<Vertex>& v, const std::vector<uint32_t>& i, int material_idx);
 
 	static Mesh GenPlane(float scale);
 	static Mesh GenCube(float scale);
