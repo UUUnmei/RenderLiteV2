@@ -23,6 +23,7 @@ public:
 public:
 	std::shared_ptr<Texture2D> diffuse;
 	std::shared_ptr<Texture2D> specular;
+	std::shared_ptr<Texture2D> normal; // from tangent space
 
 
 public:

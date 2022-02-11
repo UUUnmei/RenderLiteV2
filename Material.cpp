@@ -11,10 +11,16 @@ void Material::Set(aiTextureType type, std::shared_ptr<Texture2D> tex)
 	switch (type)
 	{
 	case aiTextureType_DIFFUSE:
-		diffuse = std::make_shared<Texture2D>(*tex);
+		diffuse = tex;
 		break;
 	case aiTextureType_SPECULAR:
-		specular = std::make_shared<Texture2D>(*tex);
+		specular = tex;
+		break;
+	case aiTextureType_NORMALS:
+		normal = tex;
+		break;
+	case aiTextureType_HEIGHT:
+		normal = tex;
 		break;
 	default:
 		break;

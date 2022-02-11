@@ -5,6 +5,7 @@
 #include "NormalShader.hpp"
 #include "SkyboxShader.hpp"
 #include "DiffuseShader.hpp"
+#include "TangentShader.hpp"
 #include "Pipeline.h"
 
 class CubeScene final: public SceneBase
@@ -14,6 +15,7 @@ class CubeScene final: public SceneBase
 public:
 	NormalRenderer nrender;
 	DiffuseRenderer drender;
+	Pipeline<TangentShader> trender;
 	Pipeline<SkyboxShader> skyrender;
 	std::shared_ptr<SceneContext> context;
 	

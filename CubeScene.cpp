@@ -26,15 +26,15 @@ void CubeScene::Init()
 	context->AddSkybox( sky );
 
 	//context->AddCube(4.0f);
-	//context->AddModel("obj/bunny.obj");
-	context->AddPlane(100.0f)
-		.BindModelMat(glm::rotate(glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f)))
-		.BindModelTex("obj/uvchecker/1/4096x4096 Texel Density Texture 1.png");
+	context->AddModel("obj/nanosuit/nanosuit.obj");
+	//context->AddPlane(100.0f)
+	//	.BindModelMat(glm::rotate(glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f)))
+	//	.BindModelTex("obj/uvchecker/1/4096x4096 Texel Density Texture 1.png");
 	//context->AddModel("obj/Sponza/sponza.obj");
 	
-	drender.BindContext(context);
-	drender.GetShader().vs.BindMatProj(context->camera->GetProj());
-	drender.GetShader().vs.BindMatModel(context->models[0]->model_matrix);
+	trender.BindContext(context);
+	trender.GetShader().vs.BindMatProj(context->camera->GetProj());
+	trender.GetShader().vs.BindMatModel(context->models[0]->model_matrix);
 
 	PipelineConfig cfg;
 	cfg.fc_order = ConfigParams::FaceCullOrder::CW;
@@ -53,8 +53,8 @@ void CubeScene::Draw()
 	
 
 	// draw pass
-	drender.GetShader().vs.BindMatView(context->camera_view_cache);
-	drender.Draw(0);
+	trender.GetShader().vs.BindMatView(context->camera_view_cache);
+	trender.Draw(0);
 
 	skyrender.GetShader().vs.BindMatView(context->camera_view_cache);
 	skyrender.DrawMesh(context->skybox->mesh);

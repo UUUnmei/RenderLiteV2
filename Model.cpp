@@ -110,6 +110,8 @@ void Model::ParseMaterial(const aiScene* scene)
 		// 加载这个material对应的不同种类的texture 见 aiTextureType
 		LoadTypeTexture(our_mat, aiTextureType_DIFFUSE, material);
 		LoadTypeTexture(our_mat, aiTextureType_SPECULAR, material);
+		LoadTypeTexture(our_mat, aiTextureType_NORMALS, material);
+		LoadTypeTexture(our_mat, aiTextureType_HEIGHT, material); // normal map in .obj file
 		// TODO
 		materials[i] = our_mat;
 	}
