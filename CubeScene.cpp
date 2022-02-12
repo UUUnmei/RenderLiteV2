@@ -32,7 +32,7 @@ void CubeScene::Init()
 	//context->AddSkybox( sky );
 
 	//context->AddCube(4.0f).BindModelTex("obj/normal.jpg");
-	context->AddModel("obj/nanosuit/nanosuit.obj");
+	context->AddModel("obj/toybox/floor.obj");
 		//.BindModelMat(glm::scale(glm::mat4(1.0f), glm::vec3(2.0f, 1.0f, 2.0f)));
 		
 	//context->AddPlane(100.0f)

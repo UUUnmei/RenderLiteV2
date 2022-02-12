@@ -112,6 +112,7 @@ void Model::ParseMaterial(const aiScene* scene)
 		LoadTypeTexture(our_mat, aiTextureType_SPECULAR, material);
 		LoadTypeTexture(our_mat, aiTextureType_NORMALS, material);
 		LoadTypeTexture(our_mat, aiTextureType_HEIGHT, material); // normal map in .obj file
+		LoadTypeTexture(our_mat, aiTextureType_DISPLACEMENT, material); 
 		// TODO
 		materials[i] = our_mat;
 	}

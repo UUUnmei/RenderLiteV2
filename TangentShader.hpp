@@ -9,7 +9,7 @@
 
 #include <memory>
 
-//#define TANGENT_SPACE
+#define TANGENT_SPACE
 #ifdef TANGENT_SPACE
 
 class TangentShader
@@ -95,6 +95,38 @@ public:
 			}
 			return res;
 		}
+		float SCALE = 0.1f; // magic, depend on result
+		void ParallaxMapping(std::shared_ptr<Texture2D> disp, glm::vec2& tc, const glm::vec3& V) {
+// reference 
+// https://learnopengl-cn.github.io/05%20Advanced%20Lighting/05%20Parallax%20Mapping
+// basic
+			//float h = disp->Sample(tc.x, tc.y).x;
+			//glm::vec2 p = (glm::vec2(V) / V.z) * h * SCALE;
+			//tc -= p; // -= when displacement map is reversed(1.0f low ~ 0.0f high), else += 
+
+// Steep Parallax Mapping
+			float num_layer = 10; // can be more flexible
+			float h_layer = 1.0f / num_layer;
+			glm::vec2 p = (glm::vec2(V) / V.z) * SCALE;
+			glm::vec2 tc_delta = p / num_layer;
+			float cur_depth = 0.0f;
+			
+			float cur_depth_map = disp->Sample(tc.x, tc.y).x;
+
+			while (cur_depth < cur_depth_map) {
+				tc -= tc_delta;
+				cur_depth += h_layer;
+				cur_depth_map = disp->Sample(tc.x, tc.y).x;
+			}
+
+//	Parallax Occlusion Mapping (base on Steep Parallax Mapping) 
+			float after_depth = cur_depth_map - cur_depth; // <0
+			glm::vec2 prev_tc = tc + tc_delta;
+			float before_depth = disp->Sample(prev_tc.x, prev_tc.y).x - (cur_depth - h_layer); // >0
+			float weight = after_depth / (after_depth - before_depth);
+			tc = prev_tc * weight + tc * (1.0f - weight);
+	// seems not work very well at edge case when displacement map is 0.0f low ~ 1.0f high 
+		}
 
 		glm::vec4 operator()(const VSOut& v, int modelId, int meshId)
 		{
@@ -109,20 +141,24 @@ public:
 			auto material_id = pContext->models[modelId]->meshes[meshId].material_idx;
 			auto& material = pContext->models[modelId]->materials[material_id];
 
+			glm::vec2 tc = v.texcoord;
+			if(material->disp != nullptr)
+				ParallaxMapping(material->disp, tc, view_dir);
+
 			glm::vec3 ka, kd, ks;
 			ka = material->Ka;
 			if (material->diffuse != nullptr)
-				kd = material->diffuse->Sample(v.texcoord.x, v.texcoord.y);
+				kd = material->diffuse->Sample(tc.x, tc.y);
 			else
 				kd = material->Kd;
 			kd = glm::pow(kd, glm::vec3(2.2f));
 			if (material->specular != nullptr)
-				ks = material->specular->Sample(v.texcoord.x, v.texcoord.y);
+				ks = material->specular->Sample(tc.x, tc.y);
 			else
 				ks = material->Ks;
 
 			assert(material->normal);
-			glm::vec3 N = glm::vec3(material->normal->Sample(v.texcoord.x, v.texcoord.y)) * 2.0f - 1.0f;
+			glm::vec3 N = glm::vec3(material->normal->Sample(tc.x, tc.y)) * 2.0f - 1.0f;
 			N = glm::normalize(N);
 
 			glm::vec3 ambient = ka * glm::vec3(1.0f); //ka * ambient light intensity

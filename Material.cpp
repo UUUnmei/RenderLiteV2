@@ -23,6 +23,9 @@ void Material::Set(aiTextureType type, std::shared_ptr<Texture2D> tex)
 	case aiTextureType_HEIGHT:
 		normal = tex;
 		break;
+	case aiTextureType_DISPLACEMENT:
+		disp = tex;
+		break;
 	default:
 		break;
 	}
