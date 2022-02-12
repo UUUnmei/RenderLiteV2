@@ -216,7 +216,7 @@ void Model::ComputeTangent(std::vector<Vertex>& v, const std::vector<uint32_t>& 
 		else
 		{
 			tangent = (dudv2.y * e1 - dudv1.y * e2) / D;
-			bitangent = (dudv1.x * e1 - dudv2.x * e2) / D;
+			bitangent = (dudv1.x * e2 - dudv2.x * e1) / D;
 		}
 
 		v0.tangent += tangent;
@@ -228,7 +228,6 @@ void Model::ComputeTangent(std::vector<Vertex>& v, const std::vector<uint32_t>& 
 	}
 
 	for (auto& x : v) {
-
 		// Gram-Schmidt orthogonalize
 		x.tangent = glm::normalize(x.tangent - glm::dot(x.tangent, x.normal) * x.normal);
 
@@ -236,8 +235,10 @@ void Model::ComputeTangent(std::vector<Vertex>& v, const std::vector<uint32_t>& 
 		// make sure right-handed coordinate
 		if (glm::dot(bitangent, x.bitangent) < 0.0f) {
 			bitangent = -bitangent;
+			x.tangent = -x.tangent;
 		}
 		x.bitangent = bitangent;
+
 	}
 }
 
@@ -257,6 +258,20 @@ Model& Model::BindModelTex(const char* path)
 		mesh.material_idx = 0;
 	materials[0] = mat;
 	return *this;
+}
+
+void Model::ComputeNormal()
+{
+	for (auto& mesh : meshes) {
+		ComputeNormal(mesh.vertices, mesh.indices);
+	}
+}
+
+void Model::ComputeTangent()
+{
+	for (auto& mesh : meshes) {
+		ComputeTangent(mesh.vertices, mesh.indices);
+	}
 }
 
 void Model::LoadFromFile(const std::string& obj_path)

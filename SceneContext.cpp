@@ -19,6 +19,7 @@ Model& SceneContext::AddPlane(float scale)
 {
 	std::unique_ptr<Model> m = std::make_unique<Model>();
 	m->meshes.push_back(Mesh::GenPlane(scale));
+	m->ComputeTangent();
 	models.push_back(std::move(m));
 	return *(models.back().get());
 }
@@ -27,6 +28,7 @@ Model& SceneContext::AddCube(float scale)
 {
 	std::unique_ptr<Model> m = std::make_unique<Model>();
 	m->meshes.push_back(Mesh::GenCube(scale));
+	m->ComputeTangent();
 	models.push_back(std::move(m));
 	return *(models.back().get());
 }
@@ -35,6 +37,7 @@ Model& SceneContext::AddIcoSphere(float scale, int div)
 {
 	std::unique_ptr<Model> m = std::make_unique<Model>();
 	m->meshes.push_back(Mesh::GenSphere(scale, div));
+	m->ComputeTangent();
 	models.push_back(std::move(m));
 	return *(models.back().get());
 }
@@ -43,6 +46,7 @@ Model& SceneContext::AddUVSphere(float scale, int lattDiv, int longDiv)
 {
 	std::unique_ptr<Model> m = std::make_unique<Model>();
 	m->meshes.push_back(Mesh::GenSphere(scale, lattDiv, longDiv));
+	m->ComputeTangent();
 	models.push_back(std::move(m));
 	return *(models.back().get());
 }

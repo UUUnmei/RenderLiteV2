@@ -39,7 +39,10 @@ public:
 	// 一定程度上只是为了方便手动设置
 	// 主要还是应该靠模型文件本身的设定，应避免使用
 	Model& BindModelTex(const char* path); 
+	void ComputeNormal();
+	void ComputeTangent();
 	void LoadFromFile(const std::string& obj_path);
+	
 
 
 

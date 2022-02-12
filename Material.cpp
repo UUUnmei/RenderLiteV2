@@ -3,7 +3,8 @@
 Material::Material()
 	: diffuse(nullptr), specular(nullptr)
 {
-	Ka = Kd = Kd = glm::vec3(-10, -10, -10); // for check validity
+	Ka = Ks = glm::vec3(0.0f); 
+	Kd = glm::vec3(0.6f);
 }
 
 void Material::Set(aiTextureType type, std::shared_ptr<Texture2D> tex)

@@ -7,6 +7,7 @@
 #include "DiffuseShader.hpp"
 #include "TangentShader.hpp"
 #include "Pipeline.h"
+#include "DirectionalLight.h"
 
 class CubeScene final: public SceneBase
 {
