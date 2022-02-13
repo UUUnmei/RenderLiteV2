@@ -1,76 +1,70 @@
 #include "DirectionalLight.h"
 
-DirectionalLight::DirectionalLight()
-	:mesh(Mesh::GenPlane(1.0f))
-{
-}
 
-DirectionalLight& DirectionalLight::WithPosition(const glm::vec3& pos)
+DirectionalLight::DirectionalLight(const glm::vec3& pos, const glm::vec3& dir)
+	:direction(glm::normalize(dir)), range(100), mesh(Mesh::GenPlane(10.0f))  
 {
-	position = pos;
-	direction = glm::normalize(target - pos);
-	view = glm::lookAt(position, target, glm::vec3(0.0f, 1.0f, 0.0f));
-	vp = projection * view;
-	return *this;
+	projection = glm::ortho(-range, range, -range, range, 0.1f, 1000.0f); // refer to camera near and far
+	WithPosition(pos);
+	intensity = glm::vec3(1500.0f);
 }
 
 DirectionalLight& DirectionalLight::WithDirection(const glm::vec3& dir)
 {
 	direction = glm::normalize(dir);
-	return *this;
-}
-
-DirectionalLight& DirectionalLight::WithIntensity(const float i)
-{
-	intensity = glm::vec3(i);
+	view = glm::lookAt(position, position - direction, glm::vec3(0.0f, 1.0f, 0.0f));
 	return *this;
 }
 
 DirectionalLight& DirectionalLight::WithRange(const float r)
 {
-	mesh = Mesh::GenPlane(r);
+	assert(r > 0);
 	range = r * 0.5f;
 	projection = glm::ortho(-range, range, -range, range, 0.1f, 1000.0f);
 	vp = projection * view;
 	return *this;
 }
 
-void DirectionalLight::BindOwnModel(void)  //bind light's model matrix
+glm::mat4 DirectionalLight::GetLightMVP(const glm::mat4& model)
 {
-	glm::vec3 lightDir = direction;
+	return vp * model;
+}
+
+glm::vec3 DirectionalLight::GetDirection(const glm::vec3& pos)
+{
+	return direction; 
+}
+
+glm::mat4 DirectionalLight::GetLightModelMatrix(void)
+{
+	// not very precise
+	glm::vec3 lightDir = -direction;
 	glm::vec3 oriDir = glm::vec3(0.0f, 0.0f, 1.0f);
 	glm::vec3 axis = glm::cross(oriDir, lightDir);
 	float rad = std::acos(glm::dot(oriDir, lightDir));
-	model = 
+	glm::mat4 model = 
 		glm::rotate(
 			glm::translate(glm::mat4(1.0f), position),
 			rad, axis
 		);
+	return model;
 }
 
-
-void DirectionalLight::BindMatModel(const glm::mat4& mat)
+Mesh& DirectionalLight::GetLightMesh(void)
 {
-	model = mat;
+	return mesh;
 }
 
-void DirectionalLight::BindMatView(const glm::mat4& mat)
+LightBase& DirectionalLight::WithPosition(const glm::vec3& pos)
 {
-	view = mat;
+	position = pos;
+	view = glm::lookAt(position, position - direction, glm::vec3(0.0f, 1.0f, 0.0f));
 	vp = projection * view;
+	return *this;
 }
 
-void DirectionalLight::BindMatProj(const glm::mat4& mat)
+LightBase& DirectionalLight::WithIntensity(const glm::vec3& i)
 {
-	projection = mat;
-	vp = projection * view;
+	intensity = i;
+	return *this;
 }
-
-void DirectionalLight::CalcMVP(void)
-{
-	mvp = vp * model;
-}
-
-
-
-

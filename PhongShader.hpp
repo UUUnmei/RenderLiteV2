@@ -86,8 +86,8 @@ public:
 
 		glm::vec4 operator()(const VSOut& v, int modelId, int meshId)
 		{
-			glm::vec3 light_pos = pContext->light->position;
-			glm::vec3 light_intensity = pContext->light->intensity;
+			glm::vec3 light_pos = pContext->light->GetPosition();
+			glm::vec3 light_intensity = pContext->light->GetIntensity();
 			glm::vec3 camera_pos = pContext->camera_pos_cache;
 			glm::vec3 light_dir = glm::normalize(light_pos /*- glm::vec3(0.0f)*/); // directional light
 			//glm::vec3 light_dir = glm::normalize(light_pos - v.world_pos);

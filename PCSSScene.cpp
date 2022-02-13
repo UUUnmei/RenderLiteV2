@@ -21,12 +21,8 @@ void PCSSScene::Init()
 {
 	std::shared_ptr<ICamera> cam = std::make_shared<OrbitCamera>(width, height, glm::radians(45.0f), width * 1.0f / height, 0.1, 1000.f);
 	context->AddCamera(cam);
-	std::shared_ptr<DirectionalLight> light = std::make_shared<DirectionalLight>();
-	light->WithPosition(glm::vec3(200.0f, 200.0f, 200.0f))
-		.WithDirection(light->target - light->position)
-		.WithIntensity(5500.f)
-		.WithRange(200.0f);
-	light->CalcMVP();
+	std::shared_ptr<DirectionalLight> light = std::make_shared<DirectionalLight>(glm::vec3(100.0f), glm::vec3(1.0f));
+	light->WithRange(200.0f);
 	context->AddLight(light);
 	context->EnableShadowMap();
 
@@ -36,37 +32,19 @@ void PCSSScene::Init()
 		.BindModelMat(glm::scale(glm::mat4(1.0f), glm::vec3(25.0f)));
 	context->AddModel("obj/floor/floor.obj")
 		.BindModelMat(glm::scale(glm::mat4(1.0f), glm::vec3(4.0f)));
-	context->AddModel("obj/floor/floor.obj")
-		.BindModelMat(
-			glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -50.0f)) *
-			glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)) *
-			glm::scale(glm::mat4(1.0f), glm::vec3(4.0f))
-		);
-	context->AddModel("obj/floor/floor.obj")
-		.BindModelMat(
-			glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f)) *
-			glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -50.0f)) *
-			glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)) *
-			glm::scale(glm::mat4(1.0f), glm::vec3(4.0f))
-		);
 
 	psrender.BindContext(context);
 	psrender.GetShader().vs.BindMatProj(context->camera->GetProj());
-
 
 	lrender.BindContext(context);
 	lrender.GetShader().vs.BindMatProj(context->camera->GetProj());
 
 	srender.BindContext(context);
-	srender.GetShader().vs.BindMatProj(context->light->projection);
+	srender.GetShader().vs.BindMatProj(light->GetProj());
 }
 
 void PCSSScene::Draw()
 {
-	// movable light test
-//static float d = 45.0f;
-//d += 3.0f;
-//context->light->WithPosition(glm::vec3(200 * cosf(glm::radians(d)), 200.0f, 200 * sinf(glm::radians(d))));
 
 	context->ClearBuffer();
 	context->camera_pos_cache = context->camera->GetCameraPosition();
@@ -75,29 +53,23 @@ void PCSSScene::Draw()
 	// shadow pass
 	context->SetRenderTarget(context->GetShadowMapPointer());
 
-	for (int i = 0; i < 4; ++i) {
-		context->light->BindMatModel(context->models[i]->model_matrix);
-		context->light->CalcMVP();
-		srender.GetShader().BindLightMVP(context->light->mvp);
+	for (int i = 0; i < 2; ++i) {
+		srender.GetShader().vs.light_mvp = context->light->GetLightMVP(context->models[i]->model_matrix);
 		srender.Draw(i);
 	}
 
 	context->SetRenderTarget(context->GetFrameBufferPointer());
 	context->GetDepthBufferPointer()->Clear();
 
-	//// draw pass
-	context->light->BindOwnModel();
-	lrender.GetShader().vs.BindMatModel(context->light->model);
+	// draw pass
+	lrender.GetShader().vs.BindMatModel(context->light->GetLightModelMatrix());
 	lrender.GetShader().vs.BindMatView(context->camera_view_cache);
-	lrender.DrawMesh(context->light->mesh);  // DrawMesh instead of Draw
+	lrender.DrawMesh(context->light->GetLightMesh());  // DrawMesh instead of Draw
 
 	psrender.GetShader().vs.BindMatView(context->camera_view_cache);
-
-	for (int i = 0; i < 4; ++i) {
+	for (int i = 0; i < 2; ++i) {
 		psrender.GetShader().vs.BindMatModel(context->models[i]->model_matrix);
-		context->light->BindMatModel(context->models[i]->model_matrix);
-		context->light->CalcMVP();
-		psrender.GetShader().BindLigthMVP(context->light->mvp);
+		psrender.GetShader().vs.light_mvp = context->light->GetLightMVP(context->models[i]->model_matrix);
 		psrender.Draw(i);
 	}
 

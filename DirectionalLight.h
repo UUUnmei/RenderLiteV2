@@ -2,42 +2,35 @@
 
 #include "FrameBuffer.h"
 #include "Mesh.h"
-
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
+#include "LightBase.h"
 
 #include <memory>
 
-class DirectionalLight
+class DirectionalLight final: public LightBase
 {
-public:
-	glm::vec3 position;
+private:
 	glm::vec3 direction;
-	glm::vec3 intensity;
 	float range;
-	glm::vec3 target{ 0.0f };
-
-	glm::mat4 model;
-	glm::mat4 view;
-	glm::mat4 projection;  // ortho
-	glm::mat4 vp; 
-	glm::mat4 mvp;
-
 	Mesh mesh;
 
 public:
-	DirectionalLight();
-	DirectionalLight& WithPosition(const glm::vec3& pos);
+	// here dir is treated as a vector from origin to (dir.x, dir.y, dir.z)
+	DirectionalLight(const glm::vec3& pos, const glm::vec3& dir);
+	// here dir is treated as a vector from origin to (dir.x, dir.y, dir.z)
 	DirectionalLight& WithDirection(const glm::vec3& dir);
-	DirectionalLight& WithIntensity(const float i);
+	// change the size of area covered by the light
+	// not light itself
 	DirectionalLight& WithRange(const float r);
-	void BindOwnModel(void);
 
+	LightBase& WithPosition(const glm::vec3& pos) override;
+	LightBase& WithIntensity(const glm::vec3& pos) override;
 public:
-	void BindMatModel(const glm::mat4& mat);
-	void BindMatView(const glm::mat4& mat);
-	void BindMatProj(const glm::mat4& mat);
-	void CalcMVP(void);
+
+	glm::mat4 GetLightMVP(const glm::mat4& model) override;
+	glm::vec3 GetDirection(const glm::vec3& pos) override;
+	glm::mat4 GetLightModelMatrix(void) override;
+	Mesh& GetLightMesh(void) override;
+	
 
 };
 

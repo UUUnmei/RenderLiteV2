@@ -74,7 +74,7 @@ public:
 				proj_view * world_pos,
 				v.texcoord,
 				TBN * glm::vec3(world_pos),
-				TBN * pContext->light->position,
+				TBN * pContext->light->GetPosition(),
 				TBN * pContext->camera_pos_cache
 			};
 		}
@@ -131,7 +131,7 @@ public:
 		glm::vec4 operator()(const VSOut& v, int modelId, int meshId)
 		{
 			glm::vec3 light_pos = v.light_pos_tangent;
-			glm::vec3 light_intensity = pContext->light->intensity;
+			glm::vec3 light_intensity = pContext->light->GetIntensity();
 			glm::vec3 camera_pos = v.cam_pos_tangent;
 			glm::vec3 light_dir = glm::normalize(light_pos - v.pos_tangent); // suppose point light
 			float d = glm::length(light_pos - v.pos_tangent);
@@ -280,8 +280,8 @@ public:
 
 		glm::vec4 operator()(const VSOut& v, int modelId, int meshId)
 		{
-			glm::vec3 light_pos = pContext->light->position;
-			glm::vec3 light_intensity = pContext->light->intensity;
+			glm::vec3 light_pos = pContext->light->GetPosition();
+			glm::vec3 light_intensity = pContext->light->GetIntensity();
 			glm::vec3 camera_pos = pContext->camera_pos_cache;
 			glm::vec3 light_dir = glm::normalize(light_pos - v.wrd_pos); // suppose point light
 			float d = glm::length(light_pos - v.wrd_pos);

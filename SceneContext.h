@@ -16,7 +16,8 @@ class SceneContext
 	
 public: 
 	std::shared_ptr<Skybox> skybox;
-	std::shared_ptr<DirectionalLight> light;  // for now only consider one light
+	std::shared_ptr<LightBase> light;  // for now only consider one light
+	// std::shared_ptr<PointLight> light;  // do not use 
 	std::shared_ptr<ICamera> camera;
 	std::vector<std::unique_ptr<Model>> models;
 
@@ -34,7 +35,7 @@ public:
 	Model& AddUVSphere(float scale, int lattDiv = 12, int longDiv = 24); //uvsphere
 	void AddCamera(std::shared_ptr<ICamera> cam);
 	void AddSkybox(std::shared_ptr<Skybox> sky);
-	void AddLight(std::shared_ptr<DirectionalLight> l);
+	void AddLight(std::shared_ptr<LightBase> l);
 	// 如果后续支持多个光源的阴影的话，可以在context放shadowmap的vector，light里加一个字段存对应的map在vector中的下标
 	void EnableShadowMap(void); 
 private:

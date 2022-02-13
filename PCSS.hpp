@@ -148,8 +148,8 @@ public:
 		}
 
 		glm::vec4 BlinnPhong(const VSOut& v, int modelId, int meshId) {
-			glm::vec3 light_pos = pContext->light->position;
-			glm::vec3 light_intensity = pContext->light->intensity;
+			glm::vec3 light_pos = pContext->light->GetPosition();
+			glm::vec3 light_intensity = pContext->light->GetIntensity();
 			glm::vec3 camera_pos = pContext->camera_pos_cache;
 			glm::vec3 light_dir = glm::normalize(light_pos /*- glm::vec3(0.0f)*/); // directional light
 			//glm::vec3 light_dir = glm::normalize(light_pos - v.world_pos);
@@ -222,7 +222,7 @@ public:
 		}
 
 		float PCSS(const glm::vec4& shadowCoord) {
-			LIGHT_FRUSTUM_SIZE = pContext->light->range;
+			LIGHT_FRUSTUM_SIZE = 100.0f;
 			LIGHT_SIZE_UV = (LIGHT_WORLD_SIZE / LIGHT_FRUSTUM_SIZE);
 
 			//! if sample every time, down the performence a lot
@@ -265,10 +265,5 @@ public:
 public:
 	VertexShader vs;
 	PixelShader ps;
-
-
-	void BindLigthMVP(const glm::mat4& mat) {
-		vs.light_mvp = mat;
-	}
 };
 

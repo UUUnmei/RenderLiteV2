@@ -21,13 +21,13 @@ void CubeScene::Init()
 	//cam->SetPosition(5, 5, 5);
 	//cam->SetDirection(1, 1, 1);
 	context->AddCamera( cam );
-	std::shared_ptr<DirectionalLight> light = std::make_shared<DirectionalLight>();
-	light->WithPosition(glm::vec3(50.0f, 50.0f, 50.0f))
-		.WithDirection(light->target - light->position)
-		.WithIntensity(2500.f)
-		.WithRange(200.0f);
-	light->CalcMVP();
-	context->AddLight(light);
+	//std::shared_ptr<DirectionalLight> light = std::make_shared<DirectionalLight>();
+	//light->WithPosition(glm::vec3(50.0f, 50.0f, 50.0f))
+	//	.WithDirection(light->target - light->position)
+	//	.WithIntensity(2500.f)
+	//	.WithRange(200.0f);
+	//light->CalcMVP();
+	//context->AddLight(light);
 	//std::shared_ptr<Skybox> sky = std::make_shared<Skybox>("D:\\Visual Studio\\RenderLiteV2\\obj\\skybox\\default\\");
 	//context->AddSkybox( sky );
 
@@ -59,9 +59,9 @@ void CubeScene::Draw()
 	context->ClearBuffer();
 	context->camera_pos_cache = context->camera->GetCameraPosition();
 	context->camera_view_cache = context->camera->GetView();
-static float d = 45.0f;
-d += 3.0f;
-context->light->WithPosition(glm::vec3(50 * cosf(glm::radians(d)), 50.0f, 50 * sinf(glm::radians(d))));
+//static float d = 45.0f;
+//d += 3.0f;
+//context->light->WithPosition(glm::vec3(50 * cosf(glm::radians(d)), 50.0f, 50 * sinf(glm::radians(d))));
 
 
 	// draw pass

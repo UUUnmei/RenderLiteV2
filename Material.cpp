@@ -1,7 +1,7 @@
 #include "Material.h"
 
 Material::Material()
-	: diffuse(nullptr), specular(nullptr)
+	: diffuse(nullptr), specular(nullptr), normal(nullptr), disp(nullptr)
 {
 	Ka = Ks = glm::vec3(0.0f); 
 	Kd = glm::vec3(0.6f);

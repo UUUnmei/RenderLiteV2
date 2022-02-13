@@ -81,9 +81,5 @@ public:
 	VertexShader vs;
 	PixelShader ps;
 
-	void BindLightMVP(const glm::mat4& mat) {
-		vs.light_mvp = mat;
-	}
-
 };
 

@@ -61,7 +61,7 @@ void SceneContext::AddSkybox(std::shared_ptr<Skybox> sky)
 	skybox = sky;
 }
 
-void SceneContext::AddLight(std::shared_ptr<DirectionalLight> L)
+void SceneContext::AddLight(std::shared_ptr<LightBase> L)
 {
 	light = L;
 }

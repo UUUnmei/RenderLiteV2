@@ -2,6 +2,7 @@
 
 #include "SceneBase.h"
 #include "ICamera.h"
+#include "DirectionalLight.h"
 #include "PCSS.hpp"
 #include "PhongWithShadow.hpp"
 #include "LightShader.hpp"
@@ -11,12 +12,12 @@
 class PCSSScene : public SceneBase
 {
 	using PCSSRenderer = Pipeline<PCSS>;
-    // using PhongShadowRenderer = Pipeline<PhongWithShadow>;
+    using PhongShadowRenderer = Pipeline<PhongWithShadow>;
 	using LightRenderer = Pipeline<LightShader>;
 	using ShadowRenderer = Pipeline<ShadowShader>;
 public:
-	PCSSRenderer psrender;
-    // PhongShadowRenderer psrender;
+	//PCSSRenderer psrender;
+    PhongShadowRenderer psrender;
 	LightRenderer lrender;
 	ShadowRenderer srender;
 	std::shared_ptr<SceneContext> context;

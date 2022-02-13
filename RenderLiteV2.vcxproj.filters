@@ -194,6 +194,9 @@
     <ClInclude Include="TangentShader.hpp">
       <Filter>Shaders</Filter>
     </ClInclude>
+    <ClInclude Include="LightBase.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Buffer.inl">
