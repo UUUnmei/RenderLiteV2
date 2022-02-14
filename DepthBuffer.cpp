@@ -8,7 +8,7 @@ DepthBuffer::DepthBuffer(uint32_t w, uint32_t h)
 
 DepthBuffer::~DepthBuffer()
 {
-    std::cout << "[DEPTHBUFFER] buffer allocate length: " << length << '\n';
+    std::cout << "[DEPTHBUFFER] buffer release length: " << length << '\n';
     // data交给父类析构
 }
 

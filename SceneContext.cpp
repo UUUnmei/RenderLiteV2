@@ -66,9 +66,13 @@ void SceneContext::AddLight(std::shared_ptr<LightBase> L)
 	light = L;
 }
 
-void SceneContext::EnableShadowMap()
+void SceneContext::EnableShadowMap(int scale)
 {
-	shadow_map = std::make_unique<FrameBuffer>(framebuffer->GetWidth(), framebuffer->GetHeight());
+	assert(scale == 0 || scale == 1 || scale == 2);
+	if(scale == 0) 
+		shadow_map = std::make_unique<FrameBuffer>(framebuffer->GetWidth(), framebuffer->GetHeight());
+	else
+		shadow_map = std::make_unique<FrameBuffer>(1024 * scale, 1024 * scale);
 }
 
 void SceneContext::ClearBuffer(const glm::vec4& bg)
@@ -106,4 +110,12 @@ FrameBuffer* SceneContext::GetShadowMapPointer() noexcept
 void SceneContext::SetRenderTarget(FrameBuffer* target)
 {
 	render_target = target;
+/*
+* suppose this function will be called in render loop as a switch frequently
+* so here choose to maintain the biggest one instead of reallocate every time
+*/
+	if(depthbuffer->GetWidth() < target->GetWidth()
+	|| depthbuffer->GetHeight() < target->GetHeight()) {
+		depthbuffer = std::make_unique<DepthBuffer>(target->GetWidth(), target->GetHeight());
+	}
 }

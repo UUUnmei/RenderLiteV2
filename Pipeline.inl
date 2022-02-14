@@ -242,7 +242,7 @@ Pipeline<Shader>::DivideAndTransform(const VSOut& v)
 	VSOut ret = v;
 
 	float invW = 1.0f / ret.proj_pos.w;
-	ret.proj_pos *= invW;  // ！shader中对于VSOut要根据需要重载*=，（也包含了坐标齐次化）
+	ret.proj_pos *= invW; 
 
 	ret.proj_pos.x = (1.0f + ret.proj_pos.x) * pContext->GetRenderTarget()->GetWidth() * 0.5f;
 	ret.proj_pos.y = (1.0f - ret.proj_pos.y) * pContext->GetRenderTarget()->GetHeight() * 0.5f;
@@ -302,11 +302,6 @@ inline void Pipeline<Shader>::DrawMesh(const Mesh& mesh)
 template<class Shader>
 inline void Pipeline<Shader>::Draw(uint32_t model_id)
 {
-	//shader.vs.BindAllMat(
-	//	pContext->models[model_id]->model_matrix,
-	//	pContext->camera->GetView(),
-	//	pContext->camera->GetProj()
-	//);
 
 	current_model_id = model_id;
 	const auto& model = pContext->models[model_id];

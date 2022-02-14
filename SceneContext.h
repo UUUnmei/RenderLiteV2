@@ -37,7 +37,7 @@ public:
 	void AddSkybox(std::shared_ptr<Skybox> sky);
 	void AddLight(std::shared_ptr<LightBase> l);
 	// 如果后续支持多个光源的阴影的话，可以在context放shadowmap的vector，light里加一个字段存对应的map在vector中的下标
-	void EnableShadowMap(void); 
+	void EnableShadowMap(int scale = 0); 
 private:
 	std::unique_ptr<DepthBuffer> depthbuffer;
 	std::unique_ptr<FrameBuffer> framebuffer;
