@@ -194,17 +194,22 @@ inline void Pipeline<Shader>::RasterizeTriangle(const VSOut& v0, const VSOut& v1
 			if (bary.x >= 0 && bary.y >= 0 && bary.z >= 0) {  // 在三角形内
 				
 				// 深度测试也可以用1/w代替z
-				float Z = v0.proj_pos.z * bary.x + v1.proj_pos.z * bary.y + v2.proj_pos.z * bary.z;
+				VSOut v2f;
+				v2f.proj_pos.x = i + 0.5f;  //gl_FragCoord
+				v2f.proj_pos.y = j + 0.5f;
+				v2f.proj_pos.z = v0.proj_pos.z * bary.x + v1.proj_pos.z * bary.y + v2.proj_pos.z * bary.z;
+				v2f.proj_pos.w = v0.proj_pos.w * bary.x + v1.proj_pos.w * bary.y + v2.proj_pos.w * bary.z;
+				//float Z = v0.proj_pos.z * bary.x + v1.proj_pos.z * bary.y + v2.proj_pos.z * bary.z;
 				
 				//深度测试
-				if ( pContext->GetDepthBufferPointer()->TryUpdate(i, j, Z) ) {
+				if ( pContext->GetDepthBufferPointer()->TryUpdate(i, j, v2f.proj_pos.z) ) {
 					bary.x *= v0.proj_pos.w;  // 注意这里w是1/w
 					bary.y *= v1.proj_pos.w;
 					bary.z *= v2.proj_pos.w;
 					float inv = 1.0f / ( bary.x + bary.y + bary.z );
 					bary *= inv;
 
-					VSOut v2f;
+					
 					// 插值几种搞法，
 					// 1、 VSOut重载* + ，好处是pipeline不用管有哪些属性需要插值，坏处是对性能有一定影响
 					//v2f = v0 * bary.x + v1 * bary.y + v2 * bary.z;
