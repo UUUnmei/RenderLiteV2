@@ -179,6 +179,7 @@
     <ClCompile Include="DirectionalLight.cpp" />
     <ClCompile Include="FPSCamera.cpp" />
     <ClCompile Include="PCSSScene.cpp" />
+    <ClCompile Include="PointLight.cpp" />
     <ClCompile Include="SceneContext.cpp" />
     <ClCompile Include="FrameBuffer.cpp" />
     <ClCompile Include="glad.c" />
@@ -212,6 +213,7 @@
     </ClInclude>
     <ClInclude Include="Pipeline.h" />
     <ClInclude Include="PipelineConfig.h" />
+    <ClInclude Include="PointLight.h" />
     <ClInclude Include="SceneBase.h" />
     <ClInclude Include="SceneContext.h" />
     <ClInclude Include="FrameBuffer.h" />

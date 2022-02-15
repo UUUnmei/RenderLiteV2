@@ -4,12 +4,15 @@
 #include "SceneContext.h"
 #include "VertexShaderMatHelper.h"
 #include "FrameBuffer.h"
+#include "PointLight.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <memory>
-//http://www.opengl-tutorial.org/cn/intermediate-tutorials/tutorial-16-shadow-mapping
+// https://developer.download.nvidia.cn/whitepapers/2008/PCSS_Integration.pdf
+// http://www.opengl-tutorial.org/cn/intermediate-tutorials/tutorial-16-shadow-mapping
+// https://developer.download.nvidia.cn/shaderlibrary/docs/shadow_PCSS.pdf
 class PCSS
 {
 public:
@@ -49,7 +52,6 @@ public:
 		}
 
 		void Lerp(const VSOut& v0, const VSOut& v1, const VSOut& v2, float a, float b, float c) noexcept {
-			proj_pos = v0.proj_pos * a + v1.proj_pos * b + v2.proj_pos * c;
 			normal = v0.normal * a + v1.normal * b + v2.normal * c;
 			texcoord = v0.texcoord * a + v1.texcoord * b + v2.texcoord * c;
 			world_pos = v0.world_pos * a + v1.world_pos * b + v2.world_pos * c;
@@ -128,10 +130,10 @@ public:
 			}
 		}
 		float LIGHT_WORLD_SIZE = 1.0;  //size of light mesh
-		float LIGHT_FRUSTUM_SIZE = 200.0;
+		float LIGHT_FRUSTUM_SIZE = 200.0; // frustum height==width
 		float LIGHT_SIZE_UV; // = (LIGHT_WORLD_SIZE / LIGHT_FRUSTUM_SIZE);
-		static constexpr float NEAR_PLANE = 1.0f;
-
+		float NEAR_PLANE = 1.0f;
+		float dnl;
 	public:
 		std::shared_ptr<SceneContext> pContext;
 
@@ -151,8 +153,7 @@ public:
 			glm::vec3 light_pos = pContext->light->GetPosition();
 			glm::vec3 light_intensity = pContext->light->GetIntensity();
 			glm::vec3 camera_pos = pContext->camera_pos_cache;
-			glm::vec3 light_dir = glm::normalize(light_pos /*- glm::vec3(0.0f)*/); // directional light
-			//glm::vec3 light_dir = glm::normalize(light_pos - v.world_pos);
+			glm::vec3 light_dir = pContext->light->GetDirection(v.world_pos);
 			float d = glm::length(light_pos - v.world_pos);
 			light_intensity /= d * d;
 			glm::vec3 N = glm::normalize(glm::vec3(v.normal));
@@ -173,38 +174,46 @@ public:
 			else
 				ks = material->Ks;
 
-			glm::vec3 ambient = ka * glm::vec3(1.0f); //ka * ambient light intensity
-
-			glm::vec3 diffuse = kd * light_intensity * std::max(0.0f, glm::dot(N, light_dir));
+			glm::vec3 ambient = ka * glm::vec3(0.05f); //ka * ambient light intensity
+			dnl = glm::dot(N, light_dir);
+			glm::vec3 diffuse = kd * light_intensity * std::max(0.0f, dnl);
 
 			glm::vec3 half = glm::normalize(view_dir + light_dir);
 			glm::vec3 specular = ks * light_intensity * qpow(std::max(0.0f, glm::dot(N, half)), 150);
 
-			glm::vec3 color = ambient + diffuse + specular;
+			glm::vec3 color = ambient + (diffuse + specular) * visibility;
+			//glm::vec3 color = (ambient + diffuse + specular) * visibility;
 			color = glm::pow(color, glm::vec3(1.0f / 2.2f));
 			color.r = std::max(0.0f, std::min(1.0f, color.r)); // Saturate
 			color.g = std::max(0.0f, std::min(1.0f, color.g));
 			color.b = std::max(0.0f, std::min(1.0f, color.b));
 			return glm::vec4(color, 1.0f);
 		}
-
+		
 		float DecodeFloatFromRGBA(const glm::vec4& rgba)
 		{
 			return glm::dot(rgba, glm::vec4(1.0f, 1 / 255.0f, 1 / 65025.0f, 1 / 16581375.0f));
+		}
+
+		float Bias(float dnl, float invw) {
+			float bias = std::clamp(0.008f * tan(acos(dnl)), 0.005f, 0.01f);
+			return bias * invw;
 		}
 
 		float PenumbraRatio(float zReceiver, float zBlocker) {
 			return (zReceiver - zBlocker) / zBlocker;
 		}
 
-		float FindBlocker(const glm::vec2& uv, float zReceiver) {
+		float FindBlocker(const glm::vec4& shadowCoord) {
 			int cnt = 0;
 			float sumZ = 0.0;
+			float zReceiver = shadowCoord.z;
+			glm::vec2 uv(shadowCoord);
 			float searchRadius = LIGHT_SIZE_UV * (zReceiver - NEAR_PLANE) / zReceiver;
 			for (int i = 0; i < SAMPLES; i++) {
 				glm::vec2 cur = uv + poissonDisk[i] * searchRadius;
 				float Z = LookUpShadowMap(cur);
-				if (Z < zReceiver) {
+				if (Z < zReceiver - Bias(dnl, shadowCoord.w)) {
 					sumZ += Z;
 					cnt ++;
 				}
@@ -222,14 +231,20 @@ public:
 		}
 
 		float PCSS(const glm::vec4& shadowCoord) {
-			LIGHT_FRUSTUM_SIZE = 100.0f;
+			if (shadowCoord.z > 1.0f) return 1.0f;
+
+	//! MUST initialize pContext->light with a PointLight object
+			auto p = std::dynamic_pointer_cast<PointLight>(pContext->light);
+			LIGHT_WORLD_SIZE = p->GetLightWorldSize();
+			LIGHT_FRUSTUM_SIZE = p->GetLightFrustumSize();
+			NEAR_PLANE = p->GetNearZ();
 			LIGHT_SIZE_UV = (LIGHT_WORLD_SIZE / LIGHT_FRUSTUM_SIZE);
 
 			//! if sample every time, down the performence a lot
 			//poissonSampler(shadowCoord);  
 			
 			// STEP 1: avgblocker depth
-			float zBlocker = FindBlocker(glm::vec2(shadowCoord), shadowCoord.z);
+			float zBlocker = FindBlocker(shadowCoord);
 			if (zBlocker < 0.0) return 1.0;
 			// STEP 2: penumbra size
 			float penumbraRadius = PenumbraRatio(shadowCoord.z, zBlocker)
@@ -241,24 +256,26 @@ public:
 			for (int i = 0; i < SAMPLES; i++) {
 				glm::vec2 cur = poissonDisk[i] * Radius + glm::vec2(shadowCoord);
 				float Z = LookUpShadowMap(cur);
-				if (Z < shadowCoord.z - 0.007)
+				if (Z < shadowCoord.z - Bias(dnl, shadowCoord.w))
 					cnt += 1.0;
 			}
 			return 1.0 - cnt / float(SAMPLES);
 		}
 
-
+		float visibility;
 		glm::vec4 operator()(const VSOut& v, int modelId, int meshId)
 		{
-			glm::vec4 color = BlinnPhong(v, modelId, meshId);
 
 			glm::vec4 shadowCoord = v.pos_from_light / v.pos_from_light.w;
 			shadowCoord.x = shadowCoord.x * 0.5f + 0.5f;
 			shadowCoord.y = -shadowCoord.y * 0.5f + 0.5f;
 			shadowCoord.z = shadowCoord.z * 0.5f + 0.5f;
-			float visibility = PCSS(shadowCoord);
+			shadowCoord.w = 1.0f / v.pos_from_light.w;
+			visibility = PCSS(shadowCoord);
 
-			return visibility * color;
+			glm::vec4 color = BlinnPhong(v, modelId, meshId);
+
+			return color;
 		}
 	};
 

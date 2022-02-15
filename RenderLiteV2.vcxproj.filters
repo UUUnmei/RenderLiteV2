@@ -87,6 +87,9 @@
     <ClCompile Include="FPSCamera.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="PointLight.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Window.h">
@@ -195,6 +198,9 @@
       <Filter>Shaders</Filter>
     </ClInclude>
     <ClInclude Include="LightBase.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="PointLight.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

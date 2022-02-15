@@ -21,10 +21,12 @@ void PCSSScene::Init()
 {
 	std::shared_ptr<ICamera> cam = std::make_shared<OrbitCamera>(width, height, glm::radians(45.0f), width * 1.0f / height, 0.1, 1000.f);
 	context->AddCamera(cam);
-	std::shared_ptr<DirectionalLight> light = std::make_shared<DirectionalLight>(glm::vec3(50.0f), glm::vec3(1.0f));
-	light->WithRange(200.0f).WithFarZ(200.0f);
+	//std::shared_ptr<DirectionalLight> light = std::make_shared<DirectionalLight>(glm::vec3(50.0f), glm::vec3(1.0f));
+	//light->WithRange(200.0f).WithFarZ(200.0f);
+	std::shared_ptr<PointLight> light = std::make_shared<PointLight>(glm::vec3(0.0f, 100.0f, 100.0f));
+	light->WithFarZ(400.0f);
 	context->AddLight(light);
-	context->EnableShadowMap(1);
+	context->EnableShadowMap();
 
 	//context->AddModel("obj/bunny.obj")
 	//	.BindModelMat(glm::scale(glm::mat4(1.0f), glm::vec3(250.0f)));
@@ -38,7 +40,7 @@ void PCSSScene::Init()
 			glm::rotate(glm::rotate(glm::mat4(1.0f), glm::radians(-45.0f), glm::vec3(1.0f, 0.0f, 0.0f)), glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f))
 			, glm::vec3(0.0f, 2.0f, 0.0f)));*/
 	context->AddModel("obj/floor/floor.obj")
-		.BindModelMat(glm::scale(glm::mat4(1.0f), glm::vec3(4.0f)));
+		.BindModelMat(glm::scale(glm::mat4(1.0f), glm::vec3(4.0f, 1.0f, 8.0f)));
 
 	psrender.BindContext(context);
 	psrender.GetShader().vs.BindMatProj(context->camera->GetProj());
@@ -56,6 +58,9 @@ void PCSSScene::Draw()
 	context->ClearBuffer();
 	context->camera_pos_cache = context->camera->GetCameraPosition();
 	context->camera_view_cache = context->camera->GetView();
+//static float d = 45.0f;
+//d += 10.0f;
+//context->light->WithPosition(glm::vec3(100 * cosf(glm::radians(d)),100.0f, 100.0f));
 
 	// shadow pass
 	context->SetRenderTarget(context->GetShadowMapPointer());

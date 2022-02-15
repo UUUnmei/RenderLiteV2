@@ -143,7 +143,7 @@ public:
 			pContext->GetShadowMapPointer()->read(x, y, vZ);
 			float fZ = DecodeFloatFromRGBA(vZ);	
 			float bias = std::clamp(0.008f * tan(acos(dnl)), 0.005f, 0.01f);
-			if (fZ < shadowCoord.z - bias) return 0.0f;
+			if (fZ < shadowCoord.z - bias * shadowCoord.w) return 0.0f;
 			return 1.0f;
 		}
 
@@ -162,7 +162,7 @@ public:
 			shadowCoord.x = shadowCoord.x * 0.5f + 0.5f;
 			shadowCoord.y = -shadowCoord.y * 0.5f + 0.5f;
 			shadowCoord.z = shadowCoord.z * 0.5f + 0.5f;
-			
+			shadowCoord.w = 1.0f / v.pos_from_light.w;
 			float visibility = LookUpShadowMap(shadowCoord);
 
 			return visibility * color;
