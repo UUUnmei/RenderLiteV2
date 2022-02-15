@@ -214,6 +214,7 @@
     <ClInclude Include="Pipeline.h" />
     <ClInclude Include="PipelineConfig.h" />
     <ClInclude Include="PointLight.h" />
+    <ClInclude Include="PointLightShadowShader.hpp" />
     <ClInclude Include="SceneBase.h" />
     <ClInclude Include="SceneContext.h" />
     <ClInclude Include="FrameBuffer.h" />

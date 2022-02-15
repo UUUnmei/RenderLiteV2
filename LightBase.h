@@ -5,6 +5,10 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 class Mesh;
+template<class T> class Pipeline;
+class ShadowShader;
+class SceneContext;
+class FrameBuffer;
 
 class LightBase {
 protected:
@@ -15,6 +19,11 @@ protected:
 	glm::mat4 view{ 1.0f };
 	glm::mat4 projection{ 1.0f };
 	glm::mat4 vp{ 1.0f };
+
+	// combine with Encode in shadow shader
+	float DecodeFloatFromRGBA(const glm::vec4& rgba){
+		return glm::dot(rgba, glm::vec4(1.0f, 1 / 255.0f, 1 / 65025.0f, 1 / 16581375.0f));
+	}
 
 public:
 	// for vs, do face cull
@@ -37,10 +46,14 @@ public:
 	virtual LightBase& WithFarZ(const float z) = 0;
 
 
-	// get mvp matrix for transform in the light view
+	// 1. get mvp matrix for transform in the light view
 	// generally view and projection is constant
 	// while model matrix may change, depends on specific model
-	virtual glm::mat4 GetLightMVP(const glm::mat4& model) = 0;
+	// 2. considering point light has 6 directions which means 6 vp matrix
+	// can use SLOT to specify one, from 0 to 5
+	// directional light ignore that parameter
+	//(but still have to give one in terms of default parameter doesn't work well with virtual function)
+	virtual glm::mat4 GetLightMVP(const glm::mat4& model, int slot) = 0;
 	// give light direction in WORLD SPACE, from given point to the light 
 	// pos may be unnecessary (like a directional light)
 	virtual glm::vec3 GetDirection(const glm::vec3& pos) = 0;  
@@ -51,4 +64,9 @@ public:
 	// for visualize 
 	// for point light, the mesh also describe its size somehow
 	virtual Mesh& GetLightMesh(void) = 0;  
+
+	// move shadow map to light from SceneContext
+	virtual FrameBuffer* GetShadowMap(int slot) = 0;
+	virtual void EnableShadowMap(int scale) = 0;
+	virtual float LookUpShadowMap(const glm::vec4& shadowCoord) = 0;
 };

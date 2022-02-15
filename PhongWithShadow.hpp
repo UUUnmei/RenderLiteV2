@@ -135,15 +135,22 @@ public:
 			return glm::dot(rgba, glm::vec4(1.0f, 1 / 255.0f, 1 / 65025.0f, 1 / 16581375.0f));
 		}
 		float dnl;
-		float LookUpShadowMap(const glm::vec4& shadowCoord) {
+		float CmpShadowMap(const glm::vec4& shadowCoord) {
 			if (shadowCoord.z > 1) return 1.0f;
-			float x = shadowCoord.x * pContext->GetShadowMapPointer()->GetWidth();
-			float y = shadowCoord.y * pContext->GetShadowMapPointer()->GetHeight();
-			glm::vec4 vZ;
-			pContext->GetShadowMapPointer()->read(x, y, vZ);
-			float fZ = DecodeFloatFromRGBA(vZ);	
+			float fZ = pContext->light->LookUpShadowMap(shadowCoord);
 			float bias = std::clamp(0.008f * tan(acos(dnl)), 0.005f, 0.01f);
 			if (fZ < shadowCoord.z - bias * shadowCoord.w) return 0.0f;
+			return 1.0f;
+		}
+
+		// for point light shadow
+		float CmpShadowMap2(const glm::vec3& world) {
+			glm::vec3 dir = world - pContext->light->GetPosition();
+			float current = glm::length(dir);
+			if (current > pContext->light->GetFarZ()) return 1.0f;
+			float fZ = pContext->light->LookUpShadowMap(glm::vec4(dir, 1.0f)) * pContext->light->GetFarZ();
+			float bias = std::clamp(2.0f * tan(acos(dnl)), 1.0f, 2.0f);
+			if (fZ < current - bias) return 0.0f;
 			return 1.0f;
 		}
 
@@ -158,13 +165,13 @@ public:
 		{
 			glm::vec4 color = BlinnPhong(v, modelId, meshId);
 
-			glm::vec4 shadowCoord = v.pos_from_light / v.pos_from_light.w;
-			shadowCoord.x = shadowCoord.x * 0.5f + 0.5f;
-			shadowCoord.y = -shadowCoord.y * 0.5f + 0.5f;
-			shadowCoord.z = shadowCoord.z * 0.5f + 0.5f;
-			shadowCoord.w = 1.0f / v.pos_from_light.w;
-			float visibility = LookUpShadowMap(shadowCoord);
-
+			//glm::vec4 shadowCoord = v.pos_from_light / v.pos_from_light.w;
+			//shadowCoord.x = shadowCoord.x * 0.5f + 0.5f;
+			//shadowCoord.y = -shadowCoord.y * 0.5f + 0.5f;
+			//shadowCoord.z = shadowCoord.z * 0.5f + 0.5f;
+			//shadowCoord.w = 1.0f / v.pos_from_light.w;
+			//float visibility = CmpShadowMap(shadowCoord);
+			float visibility = CmpShadowMap2(v.world_pos);
 			return visibility * color;
 
 			//return glm::vec4(glm::vec3(LinearDepth01(v.proj_pos.z)), 1.0f);

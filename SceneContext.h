@@ -2,7 +2,7 @@
 
 #include "Model.h"
 #include "ICamera.h"
-#include "DirectionalLight.h"
+#include "LightBase.h"
 #include "FrameBuffer.h"
 #include "DepthBuffer.h"
 #include "Skybox.h"
@@ -14,10 +14,9 @@ class SceneContext
 {
 
 	
-public: 
+public:
 	std::shared_ptr<Skybox> skybox;
 	std::shared_ptr<LightBase> light;  // for now only consider one light
-	// std::shared_ptr<PointLight> light;  // do not use 
 	std::shared_ptr<ICamera> camera;
 	std::vector<std::unique_ptr<Model>> models;
 
@@ -36,18 +35,15 @@ public:
 	void AddCamera(std::shared_ptr<ICamera> cam);
 	void AddSkybox(std::shared_ptr<Skybox> sky);
 	void AddLight(std::shared_ptr<LightBase> l);
-	// 如果后续支持多个光源的阴影的话，可以在context放shadowmap的vector，light里加一个字段存对应的map在vector中的下标
-	void EnableShadowMap(int scale = 0); 
+
 private:
 	std::unique_ptr<DepthBuffer> depthbuffer;
 	std::unique_ptr<FrameBuffer> framebuffer;
-	std::unique_ptr<FrameBuffer> shadow_map;
 	FrameBuffer* render_target{ nullptr };
 public:
 	void ClearBuffer(const glm::vec4& bg = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f));
 	FrameBuffer* GetFrameBufferPointer() noexcept;
 	DepthBuffer* GetDepthBufferPointer() noexcept;
-	FrameBuffer* GetShadowMapPointer() noexcept;
 	FrameBuffer* GetRenderTarget() noexcept;
 	void SetRenderTarget(FrameBuffer* target);
 };

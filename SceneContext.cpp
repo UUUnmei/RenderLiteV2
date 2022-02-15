@@ -1,7 +1,7 @@
 #include "SceneContext.h"
 
 SceneContext::SceneContext(uint32_t w, uint32_t h)
-	: skybox(nullptr), light(nullptr), camera(nullptr), shadow_map(nullptr)
+	: skybox(nullptr), light(nullptr), camera(nullptr)
 {
 	framebuffer = std::make_unique<FrameBuffer>(w, h);
 	depthbuffer = std::make_unique<DepthBuffer>(w, h);
@@ -66,21 +66,10 @@ void SceneContext::AddLight(std::shared_ptr<LightBase> L)
 	light = L;
 }
 
-void SceneContext::EnableShadowMap(int scale)
-{
-	assert(scale == 0 || scale == 1 || scale == 2);
-	if(scale == 0) 
-		shadow_map = std::make_unique<FrameBuffer>(framebuffer->GetWidth(), framebuffer->GetHeight());
-	else
-		shadow_map = std::make_unique<FrameBuffer>(1024 * scale, 1024 * scale);
-}
-
 void SceneContext::ClearBuffer(const glm::vec4& bg)
 {
 	framebuffer->Clear(bg);
 	depthbuffer->Clear();
-	if (shadow_map)
-		shadow_map->Clear(glm::vec4(1.0f));
 }
 
 FrameBuffer* SceneContext::GetFrameBufferPointer() noexcept
@@ -99,12 +88,6 @@ FrameBuffer* SceneContext::GetRenderTarget() noexcept
 {
 	assert(render_target != nullptr);
 	return render_target;
-}
-
-FrameBuffer* SceneContext::GetShadowMapPointer() noexcept
-{
-	assert(shadow_map != nullptr);
-	return shadow_map.get();
 }
 
 void SceneContext::SetRenderTarget(FrameBuffer* target)

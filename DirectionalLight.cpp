@@ -1,8 +1,11 @@
 #include "DirectionalLight.h"
-
+#include "SceneContext.h"
+#include "ShadowShader.hpp"
+#include "Pipeline.h"
 
 DirectionalLight::DirectionalLight(const glm::vec3& pos, const glm::vec3& dir)
-	:direction(glm::normalize(dir)), range(100), mesh(Mesh::GenPlane(10.0f))  
+	:direction(glm::normalize(dir)), range(100), mesh(Mesh::GenPlane(10.0f)),
+	shadow_map{nullptr}
 {
 	projection = glm::ortho(-range, range, -range, range, nearz, farz); 
 	WithPosition(pos);
@@ -26,7 +29,7 @@ DirectionalLight& DirectionalLight::WithRange(const float r)
 	return *this;
 }
 
-glm::mat4 DirectionalLight::GetLightMVP(const glm::mat4& model)
+glm::mat4 DirectionalLight::GetLightMVP(const glm::mat4& model, int slot)
 {
 	return vp * model;
 }
@@ -54,6 +57,29 @@ glm::mat4 DirectionalLight::GetLightModelMatrix(void)
 Mesh& DirectionalLight::GetLightMesh(void)
 {
 	return mesh;
+}
+
+FrameBuffer* DirectionalLight::GetShadowMap(int slot)
+{
+	assert(shadow_map);
+	return shadow_map.get();
+}
+
+// here shadowCoord is ndc space
+float DirectionalLight::LookUpShadowMap(const glm::vec4& shadowCoord)
+{
+	float x = shadowCoord.x * shadow_map->GetWidth();
+	float y = shadowCoord.y * shadow_map->GetHeight();
+	glm::vec4 vZ;
+	shadow_map->read(x, y, vZ);
+	float fZ = DecodeFloatFromRGBA(vZ);
+	return fZ;
+}
+
+void DirectionalLight::EnableShadowMap(int scale)
+{
+	assert(scale == 1 || scale == 2);
+	shadow_map = std::make_unique<FrameBuffer>(1024 * scale, 1024 * scale);
 }
 
 LightBase& DirectionalLight::WithNearZ(const float z)

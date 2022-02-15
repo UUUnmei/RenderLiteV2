@@ -174,7 +174,7 @@ public:
 			else
 				ks = material->Ks;
 
-			glm::vec3 ambient = ka * glm::vec3(0.05f); //ka * ambient light intensity
+			glm::vec3 ambient = ka * glm::vec3(0.5f); //ka * ambient light intensity
 			dnl = glm::dot(N, light_dir);
 			glm::vec3 diffuse = kd * light_intensity * std::max(0.0f, dnl);
 
@@ -215,17 +215,17 @@ public:
 				float Z = LookUpShadowMap(cur);
 				if (Z < zReceiver - Bias(dnl, shadowCoord.w)) {
 					sumZ += Z;
-					cnt ++;
+					cnt++;
 				}
 			}
 			return cnt > 0.0 ? sumZ / cnt : -1.0;
 		}
 
 		float LookUpShadowMap(const glm::vec2& shadowCoord) {
-			float x = shadowCoord.x * pContext->GetShadowMapPointer()->GetWidth();
-			float y = shadowCoord.y * pContext->GetShadowMapPointer()->GetHeight();
+			float x = shadowCoord.x * pContext->light->GetShadowMap(0)->GetWidth();
+			float y = shadowCoord.y * pContext->light->GetShadowMap(0)->GetHeight();
 			glm::vec4 vZ;
-			pContext->GetShadowMapPointer()->read(x, y, vZ);
+			pContext->light->GetShadowMap(0)->read(x, y, vZ);
 			float fZ = DecodeFloatFromRGBA(vZ);
 			return fZ;
 		}
@@ -234,6 +234,7 @@ public:
 			if (shadowCoord.z > 1.0f) return 1.0f;
 
 	//! MUST initialize pContext->light with a PointLight object
+	//or directly use derived class in SceneContext
 			auto p = std::dynamic_pointer_cast<PointLight>(pContext->light);
 			LIGHT_WORLD_SIZE = p->GetLightWorldSize();
 			LIGHT_FRUSTUM_SIZE = p->GetLightFrustumSize();

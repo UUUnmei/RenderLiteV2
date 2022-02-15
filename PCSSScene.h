@@ -8,6 +8,7 @@
 #include "PhongWithShadow.hpp"
 #include "LightShader.hpp"
 #include "ShadowShader.hpp"
+#include "PointLightShadowShader.hpp"
 #include "Pipeline.h"
 
 class PCSSScene : public SceneBase
@@ -17,10 +18,11 @@ class PCSSScene : public SceneBase
 	using LightRenderer = Pipeline<LightShader>;
 	using ShadowRenderer = Pipeline<ShadowShader>;
 public:
-	PCSSRenderer psrender;
-    //PhongShadowRenderer psrender;
+	//PCSSRenderer psrender;
+    PhongShadowRenderer psrender;
 	LightRenderer lrender;
 	ShadowRenderer srender;
+    Pipeline<PointLightShadowShader> srender_point;
 	std::shared_ptr<SceneContext> context;
 
     PCSSScene(uint32_t w, uint32_t h);

@@ -203,6 +203,9 @@
     <ClInclude Include="PointLight.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="PointLightShadowShader.hpp">
+      <Filter>Shaders</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Buffer.inl">
