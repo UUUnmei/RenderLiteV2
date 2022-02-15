@@ -10,6 +10,8 @@ class LightBase {
 protected:
 	glm::vec3 position;
 	glm::vec3 intensity;
+	float nearz{ 0.1f };
+	float farz{ 100.0f };
 	glm::mat4 view{ 1.0f };
 	glm::mat4 projection{ 1.0f };
 	glm::mat4 vp{ 1.0f };
@@ -27,6 +29,13 @@ public:
 	virtual const glm::vec3& GetIntensity(void) const { return intensity; }
 	virtual LightBase& WithIntensity(const glm::vec3& i) = 0;
 	
+	virtual const float GetNearZ(void) const { return nearz; }
+	virtual LightBase& WithNearZ(const float z) = 0;
+
+	virtual const float GetFarZ(void) const { return farz; }
+	// considering the float/shadow precision, farz had better not be too large
+	virtual LightBase& WithFarZ(const float z) = 0;
+
 
 	// get mvp matrix for transform in the light view
 	// generally view and projection is constant

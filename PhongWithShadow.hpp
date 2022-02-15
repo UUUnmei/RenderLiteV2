@@ -13,14 +13,14 @@
 class PhongWithShadow
 {
 public:
-
+	
 	struct VSOut {
 		glm::vec4 proj_pos;
 		glm::vec4 normal;
 		glm::vec2 texcoord;
 		glm::vec3 world_pos;
 		glm::vec4 pos_from_light;
-
+		
 		VSOut& operator+=(const VSOut& rhs)
 		{
 			proj_pos += rhs.proj_pos;
@@ -49,13 +49,10 @@ public:
 		}
 
 		void Lerp(const VSOut& v0, const VSOut& v1, const VSOut& v2, float a, float b, float c) noexcept {
-			proj_pos = v0.proj_pos * a + v1.proj_pos * b + v2.proj_pos * c;
 			normal = v0.normal * a + v1.normal * b + v2.normal * c;
 			texcoord = v0.texcoord * a + v1.texcoord * b + v2.texcoord * c;
 			world_pos = v0.world_pos * a + v1.world_pos * b + v2.world_pos * c;
 			pos_from_light = v0.pos_from_light * a + v1.pos_from_light * b + v2.pos_from_light * c;
-			//const float w = 1.0f / ret.proj_pos.w;
-			//ret.pos_from_light *= w;
 		}
 
 	};
@@ -64,7 +61,6 @@ public:
 	class VertexShader : public VertexShaderMatHelper {
 	public:
 		glm::mat4 light_mvp;
-
 		VSOut operator()(const Vertex& v) const
 		{
 			glm::vec4 world_pos = model * glm::vec4(v.position, 1.0f);
@@ -120,8 +116,8 @@ public:
 				ks = material->Ks;
 
 			glm::vec3 ambient = ka * glm::vec3(1.0f); //ka * ambient light intensity
-
-			glm::vec3 diffuse = kd * light_intensity * std::max(0.0f, glm::dot(N, light_dir));
+			dnl = glm::dot(N, light_dir);
+			glm::vec3 diffuse = kd * light_intensity * std::max(0.0f, dnl);
 
 			glm::vec3 half = glm::normalize(view_dir + light_dir);
 			glm::vec3 specular = ks * light_intensity * qpow(std::max(0.0f, glm::dot(N, half)), 150);
@@ -138,14 +134,16 @@ public:
 		{
 			return glm::dot(rgba, glm::vec4(1.0f, 1 / 255.0f, 1 / 65025.0f, 1 / 16581375.0f));
 		}
-
+		float dnl;
 		float LookUpShadowMap(const glm::vec4& shadowCoord) {
+			if (shadowCoord.z > 1) return 1.0f;
 			float x = shadowCoord.x * pContext->GetShadowMapPointer()->GetWidth();
 			float y = shadowCoord.y * pContext->GetShadowMapPointer()->GetHeight();
 			glm::vec4 vZ;
 			pContext->GetShadowMapPointer()->read(x, y, vZ);
-			float fZ = DecodeFloatFromRGBA(vZ);
-			if (fZ < shadowCoord.z - 0.004) return 0.0f;
+			float fZ = DecodeFloatFromRGBA(vZ);	
+			float bias = std::clamp(0.008f * tan(acos(dnl)), 0.005f, 0.01f);
+			if (fZ < shadowCoord.z - bias) return 0.0f;
 			return 1.0f;
 		}
 
@@ -155,7 +153,7 @@ public:
 			const float div = far / near;
 			return 1.0f / ((1 - div) * Z + div);
 		}
-
+		
 		glm::vec4 operator()(const VSOut& v, int modelId, int meshId)
 		{
 			glm::vec4 color = BlinnPhong(v, modelId, meshId);
@@ -164,6 +162,7 @@ public:
 			shadowCoord.x = shadowCoord.x * 0.5f + 0.5f;
 			shadowCoord.y = -shadowCoord.y * 0.5f + 0.5f;
 			shadowCoord.z = shadowCoord.z * 0.5f + 0.5f;
+			
 			float visibility = LookUpShadowMap(shadowCoord);
 
 			return visibility * color;

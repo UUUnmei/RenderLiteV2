@@ -24,13 +24,13 @@ public:
 
 	LightBase& WithPosition(const glm::vec3& pos) override;
 	LightBase& WithIntensity(const glm::vec3& pos) override;
+	LightBase& WithNearZ(const float z) override;
+	LightBase& WithFarZ(const float z) override;
 public:
 
 	glm::mat4 GetLightMVP(const glm::mat4& model) override;
 	glm::vec3 GetDirection(const glm::vec3& pos) override;
 	glm::mat4 GetLightModelMatrix(void) override;
 	Mesh& GetLightMesh(void) override;
-	
-
 };
 

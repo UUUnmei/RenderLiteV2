@@ -4,7 +4,7 @@
 DirectionalLight::DirectionalLight(const glm::vec3& pos, const glm::vec3& dir)
 	:direction(glm::normalize(dir)), range(100), mesh(Mesh::GenPlane(10.0f))  
 {
-	projection = glm::ortho(-range, range, -range, range, 0.1f, 1000.0f); // refer to camera near and far
+	projection = glm::ortho(-range, range, -range, range, 0.1f, 200.0f); 
 	WithPosition(pos);
 	intensity = glm::vec3(1500.0f);
 }
@@ -20,7 +20,7 @@ DirectionalLight& DirectionalLight::WithRange(const float r)
 {
 	assert(r > 0);
 	range = r * 0.5f;
-	projection = glm::ortho(-range, range, -range, range, 0.1f, 1000.0f);
+	projection = glm::ortho(-range, range, -range, range, 0.1f, 200.0f);
 	vp = projection * view;
 	return *this;
 }
@@ -53,6 +53,20 @@ glm::mat4 DirectionalLight::GetLightModelMatrix(void)
 Mesh& DirectionalLight::GetLightMesh(void)
 {
 	return mesh;
+}
+
+LightBase& DirectionalLight::WithNearZ(const float z)
+{
+	nearz = z;
+	projection = glm::ortho(-range, range, -range, range, nearz, farz);
+	return *this;
+}
+
+LightBase& DirectionalLight::WithFarZ(const float z)
+{
+	farz = z;
+	projection = glm::ortho(-range, range, -range, range, nearz, farz);
+	return *this;
 }
 
 LightBase& DirectionalLight::WithPosition(const glm::vec3& pos)

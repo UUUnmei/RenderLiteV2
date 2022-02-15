@@ -21,15 +21,22 @@ void PCSSScene::Init()
 {
 	std::shared_ptr<ICamera> cam = std::make_shared<OrbitCamera>(width, height, glm::radians(45.0f), width * 1.0f / height, 0.1, 1000.f);
 	context->AddCamera(cam);
-	std::shared_ptr<DirectionalLight> light = std::make_shared<DirectionalLight>(glm::vec3(100.0f), glm::vec3(1.0f));
-	light->WithRange(200.0f);
+	std::shared_ptr<DirectionalLight> light = std::make_shared<DirectionalLight>(glm::vec3(50.0f), glm::vec3(1.0f));
+	light->WithRange(200.0f).WithFarZ(200.0f);
 	context->AddLight(light);
-	context->EnableShadowMap();
+	context->EnableShadowMap(1);
 
 	//context->AddModel("obj/bunny.obj")
 	//	.BindModelMat(glm::scale(glm::mat4(1.0f), glm::vec3(250.0f)));
 	context->AddModel("obj/mary/Marry.obj")
-		.BindModelMat(glm::scale(glm::mat4(1.0f), glm::vec3(25.0f)));
+		.BindModelMat(glm::scale(glm::mat4(1.0f), glm::vec3(20.0f)));
+	//context->AddModel("obj/nanosuit/nanosuit.obj")
+	//	.BindModelMat(glm::scale(glm::mat4(1.0f), glm::vec3(5.0f)));
+	/*context->AddUVSphere(1.0f)
+		.BindModelTex("obj/pet.png")
+		.BindModelMat(glm::translate(
+			glm::rotate(glm::rotate(glm::mat4(1.0f), glm::radians(-45.0f), glm::vec3(1.0f, 0.0f, 0.0f)), glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f))
+			, glm::vec3(0.0f, 2.0f, 0.0f)));*/
 	context->AddModel("obj/floor/floor.obj")
 		.BindModelMat(glm::scale(glm::mat4(1.0f), glm::vec3(4.0f)));
 
@@ -77,6 +84,9 @@ void PCSSScene::Draw()
 
 void PCSSScene::OnKeyChanged(int key, int scanCode, int action, int mode)
 {
+	if (key == GLFW_KEY_S) {
+		Image::Dump("depth.png", context->GetShadowMapPointer()->GetWidth(), context->GetShadowMapPointer()->GetHeight(), 4, context->GetShadowMapPointer()->Get());
+	}
 }
 
 void PCSSScene::OnMousePositionChanged(double xpos, double ypos)
