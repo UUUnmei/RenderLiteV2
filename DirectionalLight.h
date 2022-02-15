@@ -1,10 +1,8 @@
 #pragma once
 
-#include "FrameBuffer.h"
 #include "Mesh.h"
 #include "LightBase.h"
 
-#include <memory>
 
 class DirectionalLight final: public LightBase
 {
