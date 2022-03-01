@@ -164,16 +164,23 @@ public:
 		glm::vec4 operator()(const VSOut& v, int modelId, int meshId)
 		{
 			glm::vec4 color = BlinnPhong(v, modelId, meshId);
-
-			//glm::vec4 shadowCoord = v.pos_from_light / v.pos_from_light.w;
-			//shadowCoord.x = shadowCoord.x * 0.5f + 0.5f;
-			//shadowCoord.y = -shadowCoord.y * 0.5f + 0.5f;
-			//shadowCoord.z = shadowCoord.z * 0.5f + 0.5f;
-			//shadowCoord.w = 1.0f / v.pos_from_light.w;
-			//float visibility = CmpShadowMap(shadowCoord);
+#if 1	// for now, i don't want to create a new file. 
+		// make sure of this when shading with shadow
+	
+		// basic
+			glm::vec4 shadowCoord = v.pos_from_light / v.pos_from_light.w;
+			shadowCoord.x = shadowCoord.x * 0.5f + 0.5f;
+			shadowCoord.y = -shadowCoord.y * 0.5f + 0.5f;
+			shadowCoord.z = shadowCoord.z * 0.5f + 0.5f;
+			shadowCoord.w = 1.0f / v.pos_from_light.w;
+			float visibility = CmpShadowMap(shadowCoord);
+#else 
+		// omnidirectional shadow
 			float visibility = CmpShadowMap2(v.world_pos);
+#endif
 			return visibility * color;
 
+			// depth visualize 
 			//return glm::vec4(glm::vec3(LinearDepth01(v.proj_pos.z)), 1.0f);
 		}
 	};

@@ -181,8 +181,8 @@ public:
 			glm::vec3 half = glm::normalize(view_dir + light_dir);
 			glm::vec3 specular = ks * light_intensity * qpow(std::max(0.0f, glm::dot(N, half)), 150);
 
-			glm::vec3 color = ambient + (diffuse + specular) * visibility;
-			//glm::vec3 color = (ambient + diffuse + specular) * visibility;
+			//glm::vec3 color = ambient + (diffuse + specular) * visibility;
+			glm::vec3 color = (ambient + diffuse + specular) * visibility;
 			color = glm::pow(color, glm::vec3(1.0f / 2.2f));
 			color.r = std::max(0.0f, std::min(1.0f, color.r)); // Saturate
 			color.g = std::max(0.0f, std::min(1.0f, color.g));
@@ -243,7 +243,7 @@ public:
 
 			//! if sample every time, down the performence a lot
 			//poissonSampler(shadowCoord);  
-			
+	
 			// STEP 1: avgblocker depth
 			float zBlocker = FindBlocker(shadowCoord);
 			if (zBlocker < 0.0) return 1.0;

@@ -1,15 +1,12 @@
 
-#include <iostream>
 #include "Application.h"
-#include "PCSSScene.h"
-#include "CubeScene.h"
+#include "demos/6normalmapping.h"
 
 
 int main()
 {
     
-    Application(std::make_unique<PCSSScene>(800, 600)).Run();
-    //Application(std::make_unique<CubeScene>(800, 600)).Run();
+    Application(std::make_unique<SceneNormalMapping>(800, 600)).Run();
 
     return 0;
 }

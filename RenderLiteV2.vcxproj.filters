@@ -16,7 +16,7 @@
     <Filter Include="Shaders">
       <UniqueIdentifier>{a63e50c3-2c58-49ee-b71e-0bff48934325}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Scenes">
+    <Filter Include="demos">
       <UniqueIdentifier>{4ee177f4-e681-40d7-a61a-5f85b3199123}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -69,17 +69,11 @@
     <ClCompile Include="VertexShaderMatHelper.cpp">
       <Filter>Shaders</Filter>
     </ClCompile>
-    <ClCompile Include="CubeScene.cpp">
-      <Filter>Scenes</Filter>
-    </ClCompile>
     <ClCompile Include="DirectionalLight.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="stb_image_write.h">
       <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="PCSSScene.cpp">
-      <Filter>Scenes</Filter>
     </ClCompile>
     <ClCompile Include="Skybox.cpp">
       <Filter>源文件</Filter>
@@ -89,6 +83,24 @@
     </ClCompile>
     <ClCompile Include="PointLight.cpp">
       <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="demos\1blinnphong.cpp">
+      <Filter>demos</Filter>
+    </ClCompile>
+    <ClCompile Include="demos\2skybox.cpp">
+      <Filter>demos</Filter>
+    </ClCompile>
+    <ClCompile Include="demos\3hardshadow.cpp">
+      <Filter>demos</Filter>
+    </ClCompile>
+    <ClCompile Include="demos\4pointlightshadow.cpp">
+      <Filter>demos</Filter>
+    </ClCompile>
+    <ClCompile Include="demos\5pcss.cpp">
+      <Filter>demos</Filter>
+    </ClCompile>
+    <ClCompile Include="demos\6normalmapping.cpp">
+      <Filter>demos</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -152,12 +164,6 @@
     <ClInclude Include="NormalShader.hpp">
       <Filter>Shaders</Filter>
     </ClInclude>
-    <ClInclude Include="SceneBase.h">
-      <Filter>Scenes</Filter>
-    </ClInclude>
-    <ClInclude Include="CubeScene.h">
-      <Filter>Scenes</Filter>
-    </ClInclude>
     <ClInclude Include="PipelineConfig.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -178,9 +184,6 @@
     </ClInclude>
     <ClInclude Include="PCSS.hpp">
       <Filter>Shaders</Filter>
-    </ClInclude>
-    <ClInclude Include="PCSSScene.h">
-      <Filter>Scenes</Filter>
     </ClInclude>
     <ClInclude Include="Skybox.h">
       <Filter>头文件</Filter>
@@ -205,6 +208,27 @@
     </ClInclude>
     <ClInclude Include="PointLightShadowShader.hpp">
       <Filter>Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="SceneBase.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="demos\1blinnphong.h">
+      <Filter>demos</Filter>
+    </ClInclude>
+    <ClInclude Include="demos\2skybox.h">
+      <Filter>demos</Filter>
+    </ClInclude>
+    <ClInclude Include="demos\3hardshadow.h">
+      <Filter>demos</Filter>
+    </ClInclude>
+    <ClInclude Include="demos\4pointlightshadow.h">
+      <Filter>demos</Filter>
+    </ClInclude>
+    <ClInclude Include="demos\5pcss.h">
+      <Filter>demos</Filter>
+    </ClInclude>
+    <ClInclude Include="demos\6normalmapping.h">
+      <Filter>demos</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
