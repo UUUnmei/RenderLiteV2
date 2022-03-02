@@ -1,6 +1,8 @@
 /.vs
-/obj
+/obj/*
 /x64
+/lfs
+/hooks
 
 *.drawio
-*.png
+!/obj/Sponza
