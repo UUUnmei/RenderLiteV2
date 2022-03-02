@@ -36,7 +36,7 @@ implement some basic technique
 - [ ] tiled based (for performance and try multi-thread)
 
 ## Dependencies
-- Windows (though windows and input system is based on glfw, but i haven't test on other platform)
+- Windows (though windows and input system is based on glfw, i haven't test on other platform)
 - C++17
 - stb_image v2.27 (included already)
 - stb_image_write v1.16 (included already)
@@ -44,6 +44,10 @@ implement some basic technique
 - glm-0.9.9.8
 - glfw 3.34
 - [glad](https://glad.dav1d.de/#profile=core&language=c&specification=gl&loader=on&api=gl%3D4.6)
+- git lfs (due to large model files)
+
+> Visual Studio seems not work with git-lfs well, will generate extra 'hook' and 'lfs' directory. 
+What's worse, may need to replace .git/lfs/object by this extra lfs/object when you update files tracked by lfs
 
 ## Reference
 - GAMES101
