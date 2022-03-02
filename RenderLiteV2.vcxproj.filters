@@ -239,5 +239,6 @@
       <Filter>头文件</Filter>
     </None>
     <None Include=".gitignore" />
+    <None Include=".gitattributes" />
   </ItemGroup>
 </Project>
