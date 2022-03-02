@@ -1,6 +1,14 @@
 /.vs
-/obj
+/obj/*
 /x64
 
 *.drawio
-*.png
+
+!/obj/pet.png
+!/obj/nanosuit
+!/obj/toybox
+!/obj/floor
+!/obj/Mary
+!/obj/skybox
+/obj/skybox/*
+!/obj/skybox/default

@@ -21,7 +21,7 @@ void SceneSkybox::Init()
 {
 	std::shared_ptr<OrbitCamera> cam = std::make_shared<OrbitCamera>(width, height, glm::radians(45.0f), width * 1.0f / height, 0.1, 1000.f);
 	context->AddCamera(cam);
-	std::shared_ptr<Skybox> sky = std::make_shared<Skybox>("D:\\Visual Studio\\RenderLiteV2\\obj\\skybox\\default\\");
+	std::shared_ptr<Skybox> sky = std::make_shared<Skybox>("obj/skybox/default/");
 	context->AddSkybox(sky);
 
 	context->AddIcoSphere(1.0f);
