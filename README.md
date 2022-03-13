@@ -48,6 +48,10 @@ implement some basic technique
 
 > Visual Studio seems not work with git-lfs well, will generate extra 'hook' and 'lfs' directory. 
 What's worse, may need to replace .git/lfs/object by this extra lfs/object when you update files tracked by lfs
+use `git lfs fsck` to verify correctness
+maybe have to use 'git lfs clone' instead of 'git clone' when clone this repo
+
+Make sure config the path in project setting before use and don't forget assimp's dll 
 
 ## Reference
 - GAMES101
