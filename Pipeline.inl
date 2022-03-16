@@ -24,14 +24,8 @@ inline void Pipeline<Shader>::AssembleTriangles(const std::vector<VSOut>& vertic
 		const auto& v2 = vertices[indices[i + 2]];
 		//std::cout << v0.proj_pos.x << ' ' << v0.proj_pos.y << ' ' << v0.proj_pos.z << ' ' << v0.proj_pos.w << '\n';
 
-		// 这里是在mvp后直接剔除，而不是在屏幕空间
-		if (config.draw_mode == ConfigParams::DrawMode::WireFrame
-		|| config.fc_order == ConfigParams::FaceCullOrder::NONE
-		|| (config.fc_order == ConfigParams::FaceCullOrder::CCW && FaceCullCCW(v0.proj_pos, v1.proj_pos, v2.proj_pos))
-		|| (config.fc_order == ConfigParams::FaceCullOrder::CW && FaceCullCW(v0.proj_pos, v1.proj_pos, v2.proj_pos))
-		) {
-			ProcessTriangle(v0, v1, v2);
-		}		
+		// delay the backface culling until rasterize
+		ProcessTriangle(v0, v1, v2);
 	}
 }
 
@@ -51,12 +45,6 @@ namespace {
 	void println(const glm::vec4& v) {
 		print(v);
 		std::cout << '\n';
-	}
-
-	// edge v0v1, point p
-	int EdgeEquation(const glm::ivec2& v0, const glm::ivec2& v1, const glm::ivec2& p) {
-		// cross(v1 - v0, p - v0)
-		return (v1.x - v0.x) * (p.y - v0.y) - (v1.y - v0.y) * (p.x - v0.x);
 	}
 
 	// v0v1 counter-clock-wise
@@ -176,10 +164,10 @@ inline void Pipeline<Shader>::PostProcessTriangle(const VSOut& v0, const VSOut& 
 
 
 template<class Shader>
+
 inline void Pipeline<Shader>::RasterizeTriangle(const VSOut& v0, const VSOut& v1, const VSOut& v2)
 {
-#if 1
-
+	// AABB
 	glm::ivec2 vv0(v0.proj_pos.x + 0.5f, v0.proj_pos.y + 0.5f);
 	glm::ivec2 vv1(v1.proj_pos.x + 0.5f, v1.proj_pos.y + 0.5f);
 	glm::ivec2 vv2(v2.proj_pos.x + 0.5f, v2.proj_pos.y + 0.5f);
@@ -188,26 +176,30 @@ inline void Pipeline<Shader>::RasterizeTriangle(const VSOut& v0, const VSOut& v1
 	int maxx = std::max({ vv0.x, vv1.x, vv2.x });
 	int miny = std::min({ vv0.y, vv1.y, vv2.y });
 	int maxy = std::max({ vv0.y, vv1.y, vv2.y });
+
 	minx = std::max(0, minx);
 	maxx = std::min(pContext->GetRenderTarget()->GetWidth() - 1, maxx);
 	miny = std::max(0, miny);
 	maxy = std::min(pContext->GetRenderTarget()->GetHeight() - 1, maxy);
 
+	// start process triangle
 	int bias0 = IsTopLeft(vv0, vv1) ? 0 : -1;
 	int bias1 = IsTopLeft(vv1, vv2) ? 0 : -1;
 	int bias2 = IsTopLeft(vv2, vv0) ? 0 : -1;
-
 	int dy01 = -(vv1.y - vv0.y), dx01 = vv1.x - vv0.x;
 	int dy12 = -(vv2.y - vv1.y), dx12 = vv2.x - vv1.x;
 	int dy20 = -(vv0.y - vv2.y), dx20 = vv0.x - vv2.x;
 
 	int det = dx01 * dy20 - dx20 * dy01;
 	if (det == 0) return;
-
 	// this renderer actually treats CCW as front face by default
 	// but this orientation produces negative cross product in screen space
 	// and here want to keep consistent with normal Cartesian coordinate
 	// so lets flip it
+	/// backface culling here 
+	/// more accurate while sacrificing a bit of performance than doing it just after MVP
+	if (config.fc_order == ConfigParams::FaceCullOrder::CCW && det > 0) return; 
+	if (config.fc_order == ConfigParams::FaceCullOrder::CW && det < 0) return;
 	if (det < 0) {
 		det *= -1;
 		dx01 *= -1;
@@ -221,7 +213,9 @@ inline void Pipeline<Shader>::RasterizeTriangle(const VSOut& v0, const VSOut& v1
 	glm::ivec2 P{ minx, miny };
 	// _w0 = cross(vv2 - vv1, P - vv1)
 	int _w0 = dx12 * (P.y - vv1.y) + dy12 * (P.x - vv1.x) + bias1;
+	// _w1 = cross(vv0 - vv2, P - vv2)
 	int _w1 = dx20 * (P.y - vv2.y) + dy20 * (P.x - vv2.x) + bias2;
+	// _w2 = cross(vv1 - vv0, P - vv0)
 	int _w2 = dx01 * (P.y - vv0.y) + dy01 * (P.x - vv0.x) + bias0;
 
 
@@ -254,103 +248,25 @@ inline void Pipeline<Shader>::RasterizeTriangle(const VSOut& v0, const VSOut& v1
 					b1 *= inv;
 					//b2 *= inv; // seems ok
 					b2 = 1 - b0 - b1;
-					assert(b0 > -1e5 && b1 > -1e5 && b2 > -1e5);
 					//std::cout << b0 << ' ' << b1 << ' ' << b2 << '\n';
 
 					v2f.Lerp(v0, v1, v2, b0, b1, b2);
 
 					pContext->GetRenderTarget()->write(P.x, P.y, shader.ps(v2f, current_model_id, current_mesh_id));
-				}
-			}
+				
+				} // if nearer
+
+			} // if inside
 
 			w0 += dy12;
 			w1 += dy20;
 			w2 += dy01;
-		}
+		} // for x
 		_w0 += dx12;
 		_w1 += dx20;
 		_w2 += dx01;
-	}
+	} // for y
 
-#else
-	glm::vec2 vv0(v0.proj_pos.x, v0.proj_pos.y);
-	glm::vec2 vv1(v1.proj_pos.x, v1.proj_pos.y);
-	glm::vec2 vv2(v2.proj_pos.x, v2.proj_pos.y);
-
-	int minx = std::min({ vv0.x, vv1.x, vv2.x });
-	int maxx = std::max({ vv0.x, vv1.x, vv2.x });
-	int miny = std::min({ vv0.y, vv1.y, vv2.y });
-	int maxy = std::max({ vv0.y, vv1.y, vv2.y });
-	minx = std::max(0, minx);
-	maxx = std::min(pContext->GetRenderTarget()->GetWidth() - 1, maxx);
-	miny = std::max(0, miny);
-	maxy = std::min(pContext->GetRenderTarget()->GetHeight() - 1, maxy);
-
-	// 求解重心坐标 Barycentric
-	// reference  https://zhuanlan.zhihu.com/p/337296743
-	glm::mat2 interpTransform(vv1 - vv0, vv2 - vv0);
-	interpTransform = glm::inverse(interpTransform);
-
-	for (int j = miny; j <= maxy; ++j) {	
-		for (int i = minx; i <= maxx; ++i) {	
-			glm::ivec2 P{ i, j };
-			//int w0 = EdgeEquation(vv1, vv2, P);
-			//int w1 = EdgeEquation(vv2, vv0, P);
-			//int w2 = EdgeEquation(vv0, vv1, P);
-			//float s = 1.0f / (w0 + w1 + w2);
-			//float b1 = w1 * s;
-			//float b2 = w2 * s;
-			//glm::vec3 bary = glm::vec3(1 - b1 - b2, b1, b2);
-
-			glm::vec2 current(i + 0.5f, j + 0.5f);
-			current  = interpTransform * (current - vv0);
-			glm::vec3 bary = glm::vec3(1 - current.x - current.y, current.x, current.y); // Barycentric
-			
-			//std::cout << bary.x << ' ' << bary.y << ' ' << bary.z << '\n';
-			// 各属性插值
-			// reference https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.core.pdf P501
-			// reference 《Fundamentals of Computer Graphics, Fourth Edition》 P258
-
-			if (bary.x >= 0 && bary.y >= 0 && bary.z >= 0) {  // 在三角形内
-				
-				// 深度测试也可以用1/w代替z
-				VSOut v2f;
-				v2f.proj_pos.x = i + 0.5f;  //gl_FragCoord
-				v2f.proj_pos.y = j + 0.5f;
-				v2f.proj_pos.z = v0.proj_pos.z * bary.x + v1.proj_pos.z * bary.y + v2.proj_pos.z * bary.z;
-				v2f.proj_pos.w = v0.proj_pos.w * bary.x + v1.proj_pos.w * bary.y + v2.proj_pos.w * bary.z;
-				//float Z = v0.proj_pos.z * bary.x + v1.proj_pos.z * bary.y + v2.proj_pos.z * bary.z;
-				
-				//深度测试
-				if ( pContext->GetDepthBufferPointer()->TryUpdate(i, j, v2f.proj_pos.z) ) {
-					bary.x *= v0.proj_pos.w;  // 注意这里w是1/w
-					bary.y *= v1.proj_pos.w;
-					bary.z *= v2.proj_pos.w;
-					float inv = 1.0f / ( bary.x + bary.y + bary.z );
-					bary *= inv;
-					//std::cout << bary.x << ' ' << bary.y << ' ' << bary.z << '\n';
-
-					
-					// 插值几种搞法，
-					// 1、 VSOut重载* + ，好处是pipeline不用管有哪些属性需要插值，坏处是对性能有一定影响
-					//v2f = v0 * bary.x + v1 * bary.y + v2 * bary.z;
-					// 2、 手动将需要的属性写一遍，好处是性能较好，坏处是需要根据shader改，这就不太好，仿佛固定管线。。
-					//v2f.normal = v0.normal * bary.x + v1.normal * bary.y + v2.normal * bary.z;
-					//v2f.texcoord = v0.texcoord * bary.x + v1.texcoord * bary.y + v2.texcoord * bary.z;
-					// 3、 函数。目前看来算是取得了一点平衡
-					v2f.Lerp(v0, v1, v2, bary.x, bary.y, bary.z);
-					// 4、 反射？？
-
-
-					// 如果DivideAndTransform把其他属性也除w 那这里就要恢复（在插值后）
-					//const float w = 1.0f / v2f.proj_pos.w;   
-					//v2f *= w;
-					pContext->GetRenderTarget()->write(i, j, shader.ps(v2f, current_model_id, current_mesh_id));
-				}
-			}
-		}
-	}
-#endif
 }
 
 
@@ -365,14 +281,12 @@ Pipeline<Shader>::DivideAndTransform(const VSOut& v)
 
 	float invW = 1.0f / ret.proj_pos.w;
 	ret.proj_pos *= invW; 
+	ret.proj_pos.w = invW;
 
 	ret.proj_pos.x = (1.0f + ret.proj_pos.x) * pContext->GetRenderTarget()->GetWidth() * 0.5f;
 	ret.proj_pos.y = (1.0f - ret.proj_pos.y) * pContext->GetRenderTarget()->GetHeight() * 0.5f;
 	//  -1 <= z <= 1 
 	ret.proj_pos.z = (1.0f + ret.proj_pos.z) * 0.5; // 0 <= z <= 1;
-
-	// 把 1/w 放在w处，用于插值时恢复
-	ret.proj_pos.w = invW;
 
 	return ret;
 }
@@ -383,23 +297,6 @@ static inline glm::vec4 Cross(const glm::vec4& v0, const glm::vec4& v1) {
 	glm::vec3 vv1 = glm::vec3(v1.x, v1.y, v1.z);
 	glm::vec3 res = glm::cross(vv0, vv1);
 	return glm::vec4(res, 0.0f);
-}
-
-template<class Shader>
-inline bool Pipeline<Shader>::FaceCullCCW(const glm::vec4& v0, const glm::vec4& v1, const glm::vec4& v2)
-{
-	glm::vec4 eye(0.0f, 0.0f, 0.0f, 1.0f);  // view变换后视线在原点
-	eye = shader.vs.proj * eye;	// 做投影变换  由于perspective矩阵，变换后eye.z < 0 
-	//std::cout << eye.x << ' ' << eye.y << ' ' << eye.z << ' ' << eye.w << '\n';
-	glm::vec4 cross = Cross(v1 - v0, v2 - v0);
-	float res = glm::dot(cross, v0 - eye);
-	return res >= 0.0f;
-}
-
-template<class Shader>
-inline bool Pipeline<Shader>::FaceCullCW(const glm::vec4& v0, const glm::vec4& v1, const glm::vec4& v2)
-{
-	return !FaceCullCCW(v0, v1, v2);
 }
 
 template<class Shader>

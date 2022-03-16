@@ -51,10 +51,6 @@ private:
 
 	// 透视除法，并变换到到屏幕空间
 	VSOut DivideAndTransform(const VSOut& v);
-	// 背面剔除，认为逆时针为正面  为真表示不剔除
-	bool FaceCullCCW(const glm::vec4& v0, const glm::vec4& v1, const glm::vec4& v2);
-	// 背面剔除，认为顺时针为正面  为真表示不剔除
-	bool FaceCullCW(const glm::vec4& v0, const glm::vec4& v1, const glm::vec4& v2);
 	// cvv内外判断  为真表示完全在cvv内
 	bool CVVCheck(const glm::vec4& v);
 

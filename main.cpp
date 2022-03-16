@@ -12,8 +12,8 @@
 int main()
 {
     
-    Application(std::make_unique<SceneBlinnPhong>(800, 600)).Run();
-    //Application(std::make_unique<SceneSkybox>(800, 600)).Run();
+    //Application(std::make_unique<SceneBlinnPhong>(800, 600)).Run();
+    Application(std::make_unique<SceneSkybox>(800, 600)).Run();
     //Application(std::make_unique<SceneHardshadow>(800, 600)).Run();
     //Application(std::make_unique<ScenePointLightShadow>(800, 600)).Run();
     //Application(std::make_unique<ScenePCSS>(800, 600)).Run();
