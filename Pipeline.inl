@@ -52,6 +52,20 @@ namespace {
 		print(v);
 		std::cout << '\n';
 	}
+
+	// edge v0v1, point p
+	int EdgeEquation(const glm::ivec2& v0, const glm::ivec2& v1, const glm::ivec2& p) {
+		// cross(v1 - v0, p - v0)
+		return (v1.x - v0.x) * (p.y - v0.y) - (v1.y - v0.y) * (p.x - v0.x);
+	}
+
+	// v0v1 counter-clock-wise
+	bool IsTopLeft(const glm::ivec2& v0, const glm::ivec2& v1) {
+		bool valid = (v0.y < v1.y)  // left(Y increase from top to bottom in screen space)
+			|| (v0.y == v1.y && v0.x > v1.x);  // top
+		return valid;
+	}
+
 }
 
 
@@ -96,7 +110,7 @@ inline void Pipeline<Shader>::ProcessTriangle(const VSOut& v0, const VSOut& v1, 
 		//same as z+w>0 => z>-w
 	};
 
-	VSOut vso[7], tmp[7]; 
+	VSOut vso[10], tmp[10]; 
 	int len = 3;
 	vso[0] = v0, vso[1] = v1, vso[2] = v2;
 	for (int k = 0; k < clip_planes.size(); ++k) {
@@ -124,7 +138,7 @@ inline void Pipeline<Shader>::ProcessTriangle(const VSOut& v0, const VSOut& v1, 
 				// 都不可见，弃之
 			}
 		}
-		assert(cnt <= 6);
+		assert(cnt <= 7);
 		len = cnt;
 		for (int i = 0; i < cnt; ++i)
 			vso[i] = tmp[i];
@@ -164,18 +178,113 @@ inline void Pipeline<Shader>::PostProcessTriangle(const VSOut& v0, const VSOut& 
 template<class Shader>
 inline void Pipeline<Shader>::RasterizeTriangle(const VSOut& v0, const VSOut& v1, const VSOut& v2)
 {
+#if 1
+
+	glm::ivec2 vv0(v0.proj_pos.x + 0.5f, v0.proj_pos.y + 0.5f);
+	glm::ivec2 vv1(v1.proj_pos.x + 0.5f, v1.proj_pos.y + 0.5f);
+	glm::ivec2 vv2(v2.proj_pos.x + 0.5f, v2.proj_pos.y + 0.5f);
+
+	int minx = std::min({ vv0.x, vv1.x, vv2.x });
+	int maxx = std::max({ vv0.x, vv1.x, vv2.x });
+	int miny = std::min({ vv0.y, vv1.y, vv2.y });
+	int maxy = std::max({ vv0.y, vv1.y, vv2.y });
+	minx = std::max(0, minx);
+	maxx = std::min(pContext->GetRenderTarget()->GetWidth() - 1, maxx);
+	miny = std::max(0, miny);
+	maxy = std::min(pContext->GetRenderTarget()->GetHeight() - 1, maxy);
+
+	int bias0 = IsTopLeft(vv0, vv1) ? 0 : -1;
+	int bias1 = IsTopLeft(vv1, vv2) ? 0 : -1;
+	int bias2 = IsTopLeft(vv2, vv0) ? 0 : -1;
+
+	int dy01 = -(vv1.y - vv0.y), dx01 = vv1.x - vv0.x;
+	int dy12 = -(vv2.y - vv1.y), dx12 = vv2.x - vv1.x;
+	int dy20 = -(vv0.y - vv2.y), dx20 = vv0.x - vv2.x;
+
+	int det = dx01 * dy20 - dx20 * dy01;
+	if (det == 0) return;
+
+	// this renderer actually treats CCW as front face by default
+	// but this orientation produces negative cross product in screen space
+	// and here want to keep consistent with normal Cartesian coordinate
+	// so lets flip it
+	if (det < 0) {
+		det *= -1;
+		dx01 *= -1;
+		dy01 *= -1;
+		dx12 *= -1;
+		dy12 *= -1;
+		dx20 *= -1;
+		dy20 *= -1;
+	}
+	float _inv = 1.0f / det;
+	glm::ivec2 P{ minx, miny };
+	// _w0 = cross(vv2 - vv1, P - vv1)
+	int _w0 = dx12 * (P.y - vv1.y) + dy12 * (P.x - vv1.x) + bias1;
+	int _w1 = dx20 * (P.y - vv2.y) + dy20 * (P.x - vv2.x) + bias2;
+	int _w2 = dx01 * (P.y - vv0.y) + dy01 * (P.x - vv0.x) + bias0;
+
+
+	for (P.y = miny; P.y <= maxy; ++P.y) {
+		int w0 = _w0;
+		int w1 = _w1;
+		int w2 = _w2;
+		for (P.x = minx; P.x <= maxx; ++P.x) {
+
+			// if(w0 >= 0 && w1 >= 0 && w2 >= 0) { 
+			if ((w0 | w1 | w2) >= 0) { // take advantage of sign bit in complement representation
+				float lambda0 = w0 * _inv;
+				float lambda1 = w1 * _inv;
+				//float lambda2 = w2 * _inv; // not preferred
+				float lambda2 = 1 - lambda0 - lambda1;
+				//std::cout << lambda0 << ' ' << lambda1 << ' ' << lambda2 << '\n';
+
+				VSOut v2f;
+				v2f.proj_pos.x = P.x + 0.5f;	// gl_fragCoord
+				v2f.proj_pos.y = P.y + 0.5f;
+				v2f.proj_pos.z = v0.proj_pos.z * lambda0 + v1.proj_pos.z * lambda1 + v2.proj_pos.z * lambda2;
+				v2f.proj_pos.w = v0.proj_pos.w * lambda0 + v1.proj_pos.w * lambda1 + v2.proj_pos.w * lambda2;
+				
+				if (pContext->GetDepthBufferPointer()->TryUpdate(P.x, P.y, v2f.proj_pos.z)) {
+					float b0 = lambda0 * v0.proj_pos.w;
+					float b1 = lambda1 * v1.proj_pos.w;
+					float b2 = lambda2 * v2.proj_pos.w;
+					float inv = 1.0f / (b0 + b1 + b2);
+					b0 *= inv;
+					b1 *= inv;
+					//b2 *= inv; // seems ok
+					b2 = 1 - b0 - b1;
+					assert(b0 > -1e5 && b1 > -1e5 && b2 > -1e5);
+					//std::cout << b0 << ' ' << b1 << ' ' << b2 << '\n';
+
+					v2f.Lerp(v0, v1, v2, b0, b1, b2);
+
+					pContext->GetRenderTarget()->write(P.x, P.y, shader.ps(v2f, current_model_id, current_mesh_id));
+				}
+			}
+
+			w0 += dy12;
+			w1 += dy20;
+			w2 += dy01;
+		}
+		_w0 += dx12;
+		_w1 += dx20;
+		_w2 += dx01;
+	}
+
+#else
 	glm::vec2 vv0(v0.proj_pos.x, v0.proj_pos.y);
 	glm::vec2 vv1(v1.proj_pos.x, v1.proj_pos.y);
 	glm::vec2 vv2(v2.proj_pos.x, v2.proj_pos.y);
 
-	int minx = std::floor(std::min({ vv0.x, vv1.x, vv2.x }));
-	int maxx = std::ceil(std::max({ vv0.x, vv1.x, vv2.x }));
-	int miny = std::floor(std::min({ vv0.y, vv1.y, vv2.y }));
-	int maxy = std::ceil(std::max({ vv0.y, vv1.y, vv2.y }));
-	minx = std::max(0, minx - 1);
-	maxx = std::min(pContext->GetRenderTarget()->GetWidth() - 1, maxx + 1);
-	miny = std::max(0, miny - 1);
-	maxy = std::min(pContext->GetRenderTarget()->GetHeight() - 1, maxy + 1);
+	int minx = std::min({ vv0.x, vv1.x, vv2.x });
+	int maxx = std::max({ vv0.x, vv1.x, vv2.x });
+	int miny = std::min({ vv0.y, vv1.y, vv2.y });
+	int maxy = std::max({ vv0.y, vv1.y, vv2.y });
+	minx = std::max(0, minx);
+	maxx = std::min(pContext->GetRenderTarget()->GetWidth() - 1, maxx);
+	miny = std::max(0, miny);
+	maxy = std::min(pContext->GetRenderTarget()->GetHeight() - 1, maxy);
 
 	// 求解重心坐标 Barycentric
 	// reference  https://zhuanlan.zhihu.com/p/337296743
@@ -183,11 +292,21 @@ inline void Pipeline<Shader>::RasterizeTriangle(const VSOut& v0, const VSOut& v1
 	interpTransform = glm::inverse(interpTransform);
 
 	for (int j = miny; j <= maxy; ++j) {	
-		for (int i = minx; i <= maxx; ++i) {				
+		for (int i = minx; i <= maxx; ++i) {	
+			glm::ivec2 P{ i, j };
+			//int w0 = EdgeEquation(vv1, vv2, P);
+			//int w1 = EdgeEquation(vv2, vv0, P);
+			//int w2 = EdgeEquation(vv0, vv1, P);
+			//float s = 1.0f / (w0 + w1 + w2);
+			//float b1 = w1 * s;
+			//float b2 = w2 * s;
+			//glm::vec3 bary = glm::vec3(1 - b1 - b2, b1, b2);
+
 			glm::vec2 current(i + 0.5f, j + 0.5f);
 			current  = interpTransform * (current - vv0);
 			glm::vec3 bary = glm::vec3(1 - current.x - current.y, current.x, current.y); // Barycentric
-		
+			
+			//std::cout << bary.x << ' ' << bary.y << ' ' << bary.z << '\n';
 			// 各属性插值
 			// reference https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.core.pdf P501
 			// reference 《Fundamentals of Computer Graphics, Fourth Edition》 P258
@@ -209,6 +328,7 @@ inline void Pipeline<Shader>::RasterizeTriangle(const VSOut& v0, const VSOut& v1
 					bary.z *= v2.proj_pos.w;
 					float inv = 1.0f / ( bary.x + bary.y + bary.z );
 					bary *= inv;
+					//std::cout << bary.x << ' ' << bary.y << ' ' << bary.z << '\n';
 
 					
 					// 插值几种搞法，
@@ -230,6 +350,7 @@ inline void Pipeline<Shader>::RasterizeTriangle(const VSOut& v0, const VSOut& v1
 			}
 		}
 	}
+#endif
 }
 
 

@@ -164,7 +164,7 @@ public:
 		glm::vec4 operator()(const VSOut& v, int modelId, int meshId)
 		{
 			glm::vec4 color = BlinnPhong(v, modelId, meshId);
-#if 1	// for now, i don't want to create a new file. 
+#if 0	// for now, i don't want to create a new file. 
 		// make sure of this when shading with shadow
 	
 		// basic

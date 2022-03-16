@@ -25,6 +25,7 @@ void SceneSkybox::Init()
 	context->AddSkybox(sky);
 
 	context->AddIcoSphere(1.0f);
+	//context->AddCube(1.0f);
 
 	nrender.BindContext(context);
 	nrender.GetShader().vs.BindMatProj(context->camera->GetProj());
