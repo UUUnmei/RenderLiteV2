@@ -183,9 +183,6 @@ inline void Pipeline<Shader>::RasterizeTriangle(const VSOut& v0, const VSOut& v1
 	maxy = std::min(pContext->GetRenderTarget()->GetHeight() - 1, maxy);
 
 	// start process triangle
-	int bias0 = IsTopLeft(vv0, vv1) ? 0 : -1;
-	int bias1 = IsTopLeft(vv1, vv2) ? 0 : -1;
-	int bias2 = IsTopLeft(vv2, vv0) ? 0 : -1;
 	int dy01 = -(vv1.y - vv0.y), dx01 = vv1.x - vv0.x;
 	int dy12 = -(vv2.y - vv1.y), dx12 = vv2.x - vv1.x;
 	int dy20 = -(vv0.y - vv2.y), dx20 = vv0.x - vv2.x;
@@ -210,7 +207,12 @@ inline void Pipeline<Shader>::RasterizeTriangle(const VSOut& v0, const VSOut& v1
 		dy20 *= -1;
 	}
 	float _inv = 1.0f / det;
+
 	glm::ivec2 P{ minx, miny };
+
+	int bias0 = IsTopLeft(vv0, vv1) ? 0 : -1;
+	int bias1 = IsTopLeft(vv1, vv2) ? 0 : -1;
+	int bias2 = IsTopLeft(vv2, vv0) ? 0 : -1;
 	// _w0 = cross(vv2 - vv1, P - vv1)
 	int _w0 = dx12 * (P.y - vv1.y) + dy12 * (P.x - vv1.x) + bias1;
 	// _w1 = cross(vv0 - vv2, P - vv2)
