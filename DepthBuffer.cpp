@@ -24,7 +24,9 @@ const int DepthBuffer::GetHeight() const noexcept
 
 bool DepthBuffer::TryUpdate(uint32_t x, uint32_t y, float newZ)
 {
+#ifdef _DEBUG
     if (x >= width || y >= height) return false;
+#endif
     if (newZ < data[y * width + x]) {
         data[y * width + x] = newZ;
         return true;

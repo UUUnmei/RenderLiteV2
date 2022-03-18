@@ -24,4 +24,5 @@ public:
 	bool write(uint32_t x, uint32_t y, const glm::vec4& color);
 	void Clear(const glm::vec4& color);
 
+	static constexpr float INV255 = 1.0f / 255.0f;
 };

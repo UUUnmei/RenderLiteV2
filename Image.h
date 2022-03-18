@@ -28,5 +28,6 @@ public:
 
 	static void Dump(const char* outputname, int w, int h, int bpp, const unsigned char* data);
 
+	static constexpr float INV255 = 1.0f / 255.0f;
 };
 
