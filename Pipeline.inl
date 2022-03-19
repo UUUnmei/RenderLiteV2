@@ -54,6 +54,10 @@ namespace {
 		return valid;
 	}
 
+	struct Vec2i{
+		glm::ivec4 x, y;
+	};
+
 }
 
 
@@ -167,6 +171,211 @@ template<class Shader>
 
 inline void Pipeline<Shader>::RasterizeTriangle(const VSOut& v0, const VSOut& v1, const VSOut& v2)
 {
+#if 1
+	// 2*2
+
+	// AABB
+	glm::ivec2 vv0(v0.proj_pos.x + 0.5f, v0.proj_pos.y + 0.5f);
+	glm::ivec2 vv1(v1.proj_pos.x + 0.5f, v1.proj_pos.y + 0.5f);
+	glm::ivec2 vv2(v2.proj_pos.x + 0.5f, v2.proj_pos.y + 0.5f);
+
+	int minx = std::min({ vv0.x, vv1.x, vv2.x });
+	int maxx = std::max({ vv0.x, vv1.x, vv2.x });
+	int miny = std::min({ vv0.y, vv1.y, vv2.y });
+	int maxy = std::max({ vv0.y, vv1.y, vv2.y });
+
+	minx = std::max(0, minx);
+	maxx = std::min(pContext->GetRenderTarget()->GetWidth() - 1, maxx);
+	miny = std::max(0, miny);
+	maxy = std::min(pContext->GetRenderTarget()->GetHeight() - 1, maxy);
+
+	// start process triangle
+	int dy01 = -(vv1.y - vv0.y), dx01 = vv1.x - vv0.x;
+	int dy12 = -(vv2.y - vv1.y), dx12 = vv2.x - vv1.x;
+	int dy20 = -(vv0.y - vv2.y), dx20 = vv0.x - vv2.x;
+
+	int det = dx01 * dy20 - dx20 * dy01;
+	if (det == 0) return;
+	// this renderer actually treats CCW as front face by default
+	// but this orientation produces negative cross product in screen space
+	// and here want to keep consistent with normal Cartesian coordinate
+	// so lets flip it
+	/// backface culling here 
+	/// more accurate while sacrificing a bit of performance than doing it just after MVP
+	if (config.fc_order == ConfigParams::FaceCullOrder::CCW && det > 0) return;
+	if (config.fc_order == ConfigParams::FaceCullOrder::CW && det < 0) return;
+	if (det < 0) {
+		det *= -1;
+		dx01 *= -1;
+		dy01 *= -1;
+		dx12 *= -1;
+		dy12 *= -1;
+		dx20 *= -1;
+		dy20 *= -1;
+	}
+	float _inv = 1.0f / det;
+
+	glm::ivec4 DY01(dy01), DY12(dy12), DY20(dy20);
+	glm::ivec4 DX01(dx01), DX12(dx12), DX20(dx20);
+
+	Vec2i V0{ glm::ivec4(vv0.x), glm::ivec4(vv0.y) };
+	Vec2i V1{ glm::ivec4(vv1.x), glm::ivec4(vv1.y) };
+	Vec2i V2{ glm::ivec4(vv2.x), glm::ivec4(vv2.y) };
+
+	minx -= minx % 2;
+	miny -= miny % 2;
+	// 2 * 2 quad
+	Vec2i P{ minx + glm::ivec4(0, 1, 0, 1), miny + glm::ivec4(0, 0, 1, 1) };
+
+	int bias0 = IsTopLeft(vv0, vv1) ? 0 : -1;
+	int bias1 = IsTopLeft(vv1, vv2) ? 0 : -1;
+	int bias2 = IsTopLeft(vv2, vv0) ? 0 : -1;
+	glm::ivec4 BIAS0(bias0);
+	glm::ivec4 BIAS1(bias1);
+	glm::ivec4 BIAS2(bias2);
+
+	glm::ivec4 _w0 = DX12 * (P.y - V1.y) + DY12 * (P.x - V1.x) + BIAS1;
+	glm::ivec4 _w1 = DX20 * (P.y - V2.y) + DY20 * (P.x - V2.x) + BIAS2;
+	glm::ivec4 _w2 = DX01 * (P.y - V0.y) + DY01 * (P.x - V0.x) + BIAS0;
+
+	for (int y = miny; y <= maxy; y += 2) {
+		glm::ivec4 w0 = _w0;
+		glm::ivec4 w1 = _w1;
+		glm::ivec4 w2 = _w2;
+		for (int x = minx; x <= maxx; x += 2) {
+
+			// if(w0 >= 0 && w1 >= 0 && w2 >= 0) { 
+			if ((w0.x | w1.x | w2.x) >= 0) { // take advantage of sign bit in complement representation
+				float lambda0 = w0.x * _inv;
+				float lambda1 = w1.x * _inv;
+				//float lambda2 = w2.x * _inv; // not preferred
+				float lambda2 = 1.0f - lambda0 - lambda1;
+			
+				VSOut v2f;
+				//v2f.proj_pos.x = P.x + 0.5f;	// gl_fragCoord
+				//v2f.proj_pos.y = P.y + 0.5f;
+				v2f.proj_pos.z = v0.proj_pos.z * lambda0 + v1.proj_pos.z * lambda1 + v2.proj_pos.z * lambda2;
+				//v2f.proj_pos.w = v0.proj_pos.w * lambda0.x + v1.proj_pos.w * lambda1.x + v2.proj_pos.w * lambda2.x;
+
+				if (pContext->GetDepthBufferPointer()->TryUpdate(x, y, v2f.proj_pos.z)) {
+					float b0 = lambda0 * v0.proj_pos.w;
+					float b1 = lambda1 * v1.proj_pos.w;
+					float b2 = lambda2 * v2.proj_pos.w;
+					float inv = 1.0f / (b0 + b1 + b2);
+					b0 *= inv;
+					b1 *= inv;
+					//b2 *= inv; // seems ok
+					b2 = 1 - b0 - b1;
+					//std::cout << b0 << ' ' << b1 << ' ' << b2 << '\n';
+
+					v2f.Lerp(v0, v1, v2, b0, b1, b2);
+
+					pContext->GetRenderTarget()->write(x, y, shader.ps(v2f, current_model_id, current_mesh_id));
+
+				} // if nearer
+			} // if inside
+
+			if ((w0.y | w1.y | w2.y) >= 0) { // take advantage of sign bit in complement representation
+				float lambda0 = w0.y * _inv;
+				float lambda1 = w1.y * _inv;
+				//float lambda2 = w2.x * _inv; // not preferred
+				float lambda2 = 1.0f - lambda0 - lambda1;
+
+				VSOut v2f;
+				//v2f.proj_pos.x = P.x + 0.5f;	// gl_fragCoord
+				//v2f.proj_pos.y = P.y + 0.5f;
+				v2f.proj_pos.z = v0.proj_pos.z * lambda0 + v1.proj_pos.z * lambda1 + v2.proj_pos.z * lambda2;
+				//v2f.proj_pos.w = v0.proj_pos.w * lambda0.x + v1.proj_pos.w * lambda1.x + v2.proj_pos.w * lambda2.x;
+
+				if (pContext->GetDepthBufferPointer()->TryUpdate(x + 1, y, v2f.proj_pos.z)) {
+					float b0 = lambda0 * v0.proj_pos.w;
+					float b1 = lambda1 * v1.proj_pos.w;
+					float b2 = lambda2 * v2.proj_pos.w;
+					float inv = 1.0f / (b0 + b1 + b2);
+					b0 *= inv;
+					b1 *= inv;
+					//b2 *= inv; // seems ok
+					b2 = 1 - b0 - b1;
+					//std::cout << b0 << ' ' << b1 << ' ' << b2 << '\n';
+
+					v2f.Lerp(v0, v1, v2, b0, b1, b2);
+
+					pContext->GetRenderTarget()->write(x + 1, y, shader.ps(v2f, current_model_id, current_mesh_id));
+
+				} // if nearer
+			} // if inside
+
+			if ((w0.z | w1.z | w2.z) >= 0) { // take advantage of sign bit in complement representation
+				float lambda0 = w0.z * _inv;
+				float lambda1 = w1.z * _inv;
+				//float lambda2 = w2.x * _inv; // not preferred
+				float lambda2 = 1.0f - lambda0 - lambda1;
+
+				VSOut v2f;
+				//v2f.proj_pos.x = P.x + 0.5f;	// gl_fragCoord
+				//v2f.proj_pos.y = P.y + 0.5f;
+				v2f.proj_pos.z = v0.proj_pos.z * lambda0 + v1.proj_pos.z * lambda1 + v2.proj_pos.z * lambda2;
+				//v2f.proj_pos.w = v0.proj_pos.w * lambda0.x + v1.proj_pos.w * lambda1.x + v2.proj_pos.w * lambda2.x;
+
+				if (pContext->GetDepthBufferPointer()->TryUpdate(x, y + 1, v2f.proj_pos.z)) {
+					float b0 = lambda0 * v0.proj_pos.w;
+					float b1 = lambda1 * v1.proj_pos.w;
+					float b2 = lambda2 * v2.proj_pos.w;
+					float inv = 1.0f / (b0 + b1 + b2);
+					b0 *= inv;
+					b1 *= inv;
+					//b2 *= inv; // seems ok
+					b2 = 1 - b0 - b1;
+					//std::cout << b0 << ' ' << b1 << ' ' << b2 << '\n';
+
+					v2f.Lerp(v0, v1, v2, b0, b1, b2);
+
+					pContext->GetRenderTarget()->write(x, y + 1, shader.ps(v2f, current_model_id, current_mesh_id));
+
+				} // if nearer
+			} // if inside
+			
+			if ((w0.w | w1.w | w2.w) >= 0) { // take advantage of sign bit in complement representation
+				float lambda0 = w0.w * _inv;
+				float lambda1 = w1.w * _inv;
+				//float lambda2 = w2.x * _inv; // not preferred
+				float lambda2 = 1.0f - lambda0 - lambda1;
+
+				VSOut v2f;
+				//v2f.proj_pos.x = P.x + 0.5f;	// gl_fragCoord
+				//v2f.proj_pos.y = P.y + 0.5f;
+				v2f.proj_pos.z = v0.proj_pos.z * lambda0 + v1.proj_pos.z * lambda1 + v2.proj_pos.z * lambda2;
+				//v2f.proj_pos.w = v0.proj_pos.w * lambda0.x + v1.proj_pos.w * lambda1.x + v2.proj_pos.w * lambda2.x;
+
+				if (pContext->GetDepthBufferPointer()->TryUpdate(x + 1, y + 1, v2f.proj_pos.z)) {
+					float b0 = lambda0 * v0.proj_pos.w;
+					float b1 = lambda1 * v1.proj_pos.w;
+					float b2 = lambda2 * v2.proj_pos.w;
+					float inv = 1.0f / (b0 + b1 + b2);
+					b0 *= inv;
+					b1 *= inv;
+					//b2 *= inv; // seems ok
+					b2 = 1 - b0 - b1;
+					//std::cout << b0 << ' ' << b1 << ' ' << b2 << '\n';
+
+					v2f.Lerp(v0, v1, v2, b0, b1, b2);
+
+					pContext->GetRenderTarget()->write(x + 1, y + 1, shader.ps(v2f, current_model_id, current_mesh_id));
+
+				} // if nearer
+			} // if inside
+
+
+			w0 += DY12 * 2;
+			w1 += DY20 * 2;
+			w2 += DY01 * 2;
+		} // for x
+		_w0 += DX12 * 2;
+		_w1 += DX20 * 2;
+		_w2 += DX01 * 2;
+	} // for y
+
+#else
 	// AABB
 	glm::ivec2 vv0(v0.proj_pos.x + 0.5f, v0.proj_pos.y + 0.5f);
 	glm::ivec2 vv1(v1.proj_pos.x + 0.5f, v1.proj_pos.y + 0.5f);
@@ -268,7 +477,7 @@ inline void Pipeline<Shader>::RasterizeTriangle(const VSOut& v0, const VSOut& v1
 		_w1 += dx20;
 		_w2 += dx01;
 	} // for y
-
+#endif
 }
 
 
