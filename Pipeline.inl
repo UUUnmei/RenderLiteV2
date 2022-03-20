@@ -244,6 +244,8 @@ inline void Pipeline<Shader>::RasterizeTriangle(const VSOut& v0, const VSOut& v1
 		glm::ivec4 w2 = _w2;
 		for (int x = minx; x <= maxx; x += 2) {
 
+#if 0
+
 			// if(w0 >= 0 && w1 >= 0 && w2 >= 0) { 
 			if ((w0.x | w1.x | w2.x) >= 0) { // take advantage of sign bit in complement representation
 				float lambda0 = w0.x * _inv;
@@ -365,6 +367,50 @@ inline void Pipeline<Shader>::RasterizeTriangle(const VSOut& v0, const VSOut& v1
 				} // if nearer
 			} // if inside
 
+			
+#else
+			VSOut v2f[4];
+
+			glm::vec4 lambda0 = glm::vec4(w0) * _inv;
+			glm::vec4 lambda1 = glm::vec4(w1) * _inv;
+			glm::vec4 lambda2 = 1.0f - lambda0 - lambda1;
+
+			glm::vec4 Z = lambda0 * v0.proj_pos.z + lambda1 * v1.proj_pos.z + lambda2 * v2.proj_pos.z;
+			v2f[0].proj_pos.z = Z.x;
+			v2f[1].proj_pos.z = Z.y;
+			v2f[2].proj_pos.z = Z.z;
+			v2f[3].proj_pos.z = Z.w;
+
+			glm::vec4 b0 = lambda0 * v0.proj_pos.w;
+			glm::vec4 b1 = lambda1 * v1.proj_pos.w;
+			glm::vec4 b2 = lambda2 * v2.proj_pos.w;
+			glm::vec4 inv = 1.0f / (b0 + b1 + b2);
+			b0 *= inv;
+			b1 *= inv;
+			b2 = 1.0f - b0 - b1;
+
+			v2f[0].Lerp(v0, v1, v2, b0.x, b1.x, b2.x);
+			v2f[1].Lerp(v0, v1, v2, b0.y, b1.y, b2.y);
+			v2f[2].Lerp(v0, v1, v2, b0.z, b1.z, b2.z);
+			v2f[3].Lerp(v0, v1, v2, b0.w, b1.w, b2.w);
+
+			if ((w0.x | w1.x | w2.x) >= 0
+				&& pContext->GetDepthBufferPointer()->TryUpdate(x, y, v2f[0].proj_pos.z)) {
+				pContext->GetRenderTarget()->write(x, y, shader.ps(v2f[0], current_model_id, current_mesh_id));
+			}
+			if ((w0.y | w1.y | w2.y) >= 0
+				&& pContext->GetDepthBufferPointer()->TryUpdate(x + 1, y, v2f[1].proj_pos.z)) {
+				pContext->GetRenderTarget()->write(x + 1, y, shader.ps(v2f[1], current_model_id, current_mesh_id));
+			}
+			if ((w0.z | w1.z | w2.z) >= 0
+				&& pContext->GetDepthBufferPointer()->TryUpdate(x, y + 1, v2f[2].proj_pos.z)) {
+				pContext->GetRenderTarget()->write(x, y + 1, shader.ps(v2f[2], current_model_id, current_mesh_id));
+			}
+			if ((w0.w | w1.w | w2.w) >= 0
+				&& pContext->GetDepthBufferPointer()->TryUpdate(x + 1, y + 1, v2f[3].proj_pos.z)) {
+				pContext->GetRenderTarget()->write(x + 1, y + 1, shader.ps(v2f[3], current_model_id, current_mesh_id));
+			}
+#endif 
 
 			w0 += DY12 * 2;
 			w1 += DY20 * 2;
