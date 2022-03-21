@@ -135,7 +135,7 @@ void Model::LoadTypeTexture(std::shared_ptr<Material> our_mat, aiTextureType typ
 	
 		Texture2D tex(path.c_str());
 		textures[path] = tex;
-
+		tex.EnableMipmap();
 		our_mat->Set(type, std::make_shared<Texture2D>(tex));  // 给material和texture建立联系
 	}
 }

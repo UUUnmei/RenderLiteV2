@@ -12,7 +12,7 @@
 class NormalShader
 {
 public:
-	using UseDerivative = std::true_type;
+	using UseDerivative = std::false_type;
 
 	struct VSOut {
 		glm::vec4 proj_pos;

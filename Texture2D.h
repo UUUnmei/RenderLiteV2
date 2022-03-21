@@ -13,7 +13,7 @@ class Texture2D
 	float invW;
 	float invH;
 
-	bool is_mipmap_enable{ true }; //! TEST
+	bool is_mipmap_enable{ false }; //! TEST
 	
 	void GenMipmap(void);
 public:
