@@ -24,11 +24,13 @@ void SceneSkybox::Init()
 	std::shared_ptr<Skybox> sky = std::make_shared<Skybox>("obj/skybox/default/");
 	context->AddSkybox(sky);
 
-	context->AddIcoSphere(1.0f);
+	context->AddCube(30.0f).BindModelTex("obj/miptest.jpeg");
 	//context->AddCube(1.0f);
 
-	nrender.BindContext(context);
-	nrender.GetShader().vs.BindMatProj(context->camera->GetProj());
+	//nrender.BindContext(context);
+	//nrender.GetShader().vs.BindMatProj(context->camera->GetProj());
+	drender.BindContext(context);
+	drender.GetShader().vs.BindMatProj(context->camera->GetProj());
 
 	PipelineConfig cfg;
 	cfg.fc_order = ConfigParams::FaceCullOrder::CW;
@@ -45,11 +47,13 @@ void SceneSkybox::Draw()
 	context->camera_pos_cache = context->camera->GetCameraPosition();
 	context->camera_view_cache = context->camera->GetView();
 	
-	nrender.GetShader().vs.BindMatView(context->camera_view_cache);
-	nrender.Draw(0);
+	//nrender.GetShader().vs.BindMatView(context->camera_view_cache);
+	//nrender.Draw(0);
+	drender.GetShader().vs.BindMatView(context->camera_view_cache);
+	drender.Draw(0);
 
 	skyrender.GetShader().vs.BindMatView(context->camera_view_cache);
-	skyrender.DrawMesh(context->skybox->mesh);
+	//skyrender.DrawMesh(context->skybox->mesh);
 }
 
 void SceneSkybox::OnKeyChanged(int key, int scanCode, int action, int mode)

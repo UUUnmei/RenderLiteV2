@@ -253,6 +253,7 @@ Model& Model::BindModelTex(const char* path)
 {
 	std::shared_ptr<Texture2D> tex = std::make_shared<Texture2D>(path);
 	//tex->smode = Texture2D::SampleMode::Bilinear;
+	tex->EnableMipmap();
 	std::shared_ptr<Material> mat = std::make_shared<Material>();
 	mat->diffuse = tex;
 	for (auto& mesh : meshes)
