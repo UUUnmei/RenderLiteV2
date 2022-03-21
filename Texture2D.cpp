@@ -124,7 +124,7 @@ glm::vec4 Texture2D::Sample(float x, float y, float level)
 		int d2 = d1 + 1;
 		assert(d1 >= 0);
 		assert(d2 < mips.size());
-// #define MIPMAP_TEST
+#define MIPMAP_TEST
 #ifdef MIPMAP_TEST
 		d2 = std::min(d2, 7);
 		d1 = std::min(d1, 7);
@@ -174,11 +174,11 @@ glm::vec4 Texture2D::BilinearSampling(std::shared_ptr<Image> src, float x, float
 			  + (1 - dy)dx * c21 + dxdy * c22
 
 		*/
-	x = x * src->GetWidth() + 0.5f;
-	y = (1 - y) * src->GetHeight() + 0.5f;
-	int x1 = (int)x;
+	x = std::max(0.0f, x) * src->GetWidth() + 0.5f;
+	y = std::max(0.0f, 1 - y) * src->GetHeight() + 0.5f;
+	int x1 = std::min(src->GetWidth() - 1, (int)x);
 	int x2 = std::min(src->GetWidth() - 1, (int)(x + 1));
-	int y1 = (int)y;
+	int y1 = std::min(src->GetHeight() - 1, (int)y);
 	int y2 = std::min(src->GetHeight() - 1, (int)(y + 1));
 
 	glm::vec4 colors[4];

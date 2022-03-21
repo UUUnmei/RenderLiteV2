@@ -84,8 +84,8 @@ public:
 				float w = material->diffuse->GetWidth();
 				float h = material->diffuse->GetHeight();
 				float mx2 = std::max(
-					glm::dot(v.ddx_texcoord, v.ddx_texcoord) * w * h,
-					glm::dot(v.ddy_texcoord, v.ddy_texcoord) * w * h
+					glm::dot(v.ddx_texcoord, v.ddx_texcoord) * w * w,
+					glm::dot(v.ddy_texcoord, v.ddy_texcoord) * h * h
 				);
 				float level = 0.5f * glm::log2(mx2);
 				color = material->diffuse->Sample(v.texcoord.x, v.texcoord.y, level);
