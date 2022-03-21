@@ -12,7 +12,7 @@
 class DiffuseShader
 {
 public:
-	using UseDerivative = std::false_type;
+	using UseDerivative = std::true_type;
 	struct VSOut {
 		glm::vec4 proj_pos;
 		glm::vec2 texcoord;
@@ -65,8 +65,16 @@ public:
 			auto material_id = pContext->models[modelId]->meshes[meshId].material_idx;
 			auto& material = pContext->models[modelId]->materials[material_id];
 			glm::vec4 color;
-			if (material->diffuse != nullptr)
-				color = material->diffuse->Sample(v.texcoord.x, v.texcoord.y);
+			if (material->diffuse != nullptr) {
+				float w = material->diffuse->GetWidth();
+				float h = material->diffuse->GetHeight();
+				float mx2 = std::max(
+					glm::dot(ddx.texcoord, ddx.texcoord) * w * w,
+					glm::dot(ddy.texcoord, ddy.texcoord) * h * h
+				);
+				float level = 0.5f * glm::log2(mx2);
+				color = material->diffuse->Sample(v.texcoord.x, v.texcoord.y, level);
+			}
 			else
 				color = glm::vec4(material->Kd, 1.0f);
 			return color;

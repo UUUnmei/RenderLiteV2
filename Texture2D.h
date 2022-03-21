@@ -34,14 +34,17 @@ public:
 
 public:
 	Texture2D();
-	//Texture2D(const Texture2D&);
-	//Texture2D& operator=(const Texture2D&); 
 	Texture2D(const Texture2D&) = default;
 	Texture2D& operator=(const Texture2D&) = default;
 	Texture2D(const char* file);
 
+	const int GetWidth() const noexcept;
+	const int GetHeight() const noexcept;
+
 	// sample function
-	glm::vec4 Sample(float x, float y);
+	glm::vec4 Sample(float x, float y, float level = 0.0f);
+private:
+	glm::vec4 BilinearSampling(std::shared_ptr<Image> src, float x, float y);
 
 };
 
