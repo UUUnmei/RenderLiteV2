@@ -12,6 +12,7 @@
 class NormalShader
 {
 public:
+	using UseDerivative = std::true_type;
 
 	struct VSOut {
 		glm::vec4 proj_pos;
@@ -66,7 +67,7 @@ public:
 	public:
 		std::shared_ptr<SceneContext> pContext;
 
-		glm::vec4 operator()(const VSOut& v, int modelId, int meshId) const
+		glm::vec4 operator()(const VSOut& v, const VSOut& ddx, const VSOut& ddy, int modelId, int meshId) const
 		{
 			glm::vec3 color(v.normal.x, v.normal.y, v.normal.z);
 			color = glm::normalize(color) * 0.5f + glm::vec3(0.5f);  //·¨Ïß-1~1 -> 0~1 

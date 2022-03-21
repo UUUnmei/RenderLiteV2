@@ -15,7 +15,7 @@
 class TangentShader
 {
 public:
-
+	using UseDerivative = std::false_type;
 	struct VSOut {
 		glm::vec4 proj_pos;
 		glm::vec2 texcoord;
@@ -128,7 +128,7 @@ public:
 	// seems not work very well at edge case when displacement map is 0.0f low ~ 1.0f high 
 		}
 
-		glm::vec4 operator()(const VSOut& v, int modelId, int meshId)
+		glm::vec4 operator()(const VSOut& v, const VSOut& ddx, const VSOut& ddy, int modelId, int meshId)
 		{
 			glm::vec3 light_pos = v.light_pos_tangent;
 			glm::vec3 light_intensity = pContext->light->GetIntensity();
@@ -278,7 +278,7 @@ public:
 			return res;
 		}
 
-		glm::vec4 operator()(const VSOut& v, int modelId, int meshId)
+		glm::vec4 operator()(const VSOut& v, const VSOut& ddx, const VSOut& ddy, int modelId, int meshId)
 		{
 			glm::vec3 light_pos = pContext->light->GetPosition();
 			glm::vec3 light_intensity = pContext->light->GetIntensity();

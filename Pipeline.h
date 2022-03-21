@@ -46,6 +46,9 @@ private:
 	void PostProcessTriangle(const VSOut& v0, const VSOut& v1, const VSOut& v2);
 	// 三角形光栅化，调用pixel shader
 	void RasterizeTriangle(const VSOut& v0, const VSOut& v1, const VSOut& v2);
+	void RasterizeBasic(const VSOut& v0, const VSOut& v1, const VSOut& v2);
+	void RasterizeWithDerivative(const VSOut& v0, const VSOut& v1, const VSOut& v2);
+
 	void DrawLine(const int x0, const int y0, const int x1, const int y1, const glm::vec4& color);
 
 

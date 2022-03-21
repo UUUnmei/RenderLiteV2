@@ -12,7 +12,7 @@
 class DiffuseShader
 {
 public:
-
+	using UseDerivative = std::false_type;
 	struct VSOut {
 		glm::vec4 proj_pos;
 		glm::vec2 texcoord;
@@ -60,7 +60,7 @@ public:
 	public:
 		std::shared_ptr<SceneContext> pContext;
 
-		glm::vec4 operator()(const VSOut& v, int modelId, int meshId) const
+		glm::vec4 operator()(const VSOut& v, const VSOut& ddx, const VSOut& ddy, int modelId, int meshId) const
 		{
 			auto material_id = pContext->models[modelId]->meshes[meshId].material_idx;
 			auto& material = pContext->models[modelId]->materials[material_id];

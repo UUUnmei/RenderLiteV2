@@ -12,7 +12,7 @@
 class PointLightShadowShader
 {
 public:
-
+	using UseDerivative = std::false_type;
 	struct VSOut {
 		glm::vec4 proj_pos;
 		glm::vec3 world_pos;
@@ -72,7 +72,7 @@ public:
 			return ret;
 		}
 
-		glm::vec4 operator()(const VSOut& v, int modelId, int meshId)
+		glm::vec4 operator()(const VSOut& v, const VSOut& ddx, const VSOut& ddy, int modelId, int meshId)
 		{	
 			float d = glm::length(v.world_pos - pContext->light->GetPosition()) / pContext->light->GetFarZ();
 			return EncodeFloatToRGBA(d);

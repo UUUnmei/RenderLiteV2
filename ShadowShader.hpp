@@ -12,7 +12,7 @@
 class ShadowShader
 {
 public:
-
+	using UseDerivative = std::false_type;
 	struct VSOut {
 		glm::vec4 proj_pos;
 
@@ -68,7 +68,7 @@ public:
 			return ret;
 		}
 
-		glm::vec4 operator()(const VSOut& v, int modelId, int meshId) 
+		glm::vec4 operator()(const VSOut& v, const VSOut& ddx, const VSOut& ddy, int modelId, int meshId)
 		{
 			//std::cout << v.proj_pos.z << '\n';
 			return EncodeFloatToRGBA(v.proj_pos.z);

@@ -12,7 +12,7 @@
 class SkyboxShader
 {
 public:
-
+	using UseDerivative = std::false_type;
 	struct VSOut {
 		glm::vec4 proj_pos;
 		glm::vec3 pos;
@@ -62,7 +62,7 @@ public:
 	public:
 		std::shared_ptr<SceneContext> pContext;
 
-		glm::vec4 operator()(const VSOut& v, int modelId, int meshId) const
+		glm::vec4 operator()(const VSOut& v, const VSOut& ddx, const VSOut& ddy, int modelId, int meshId) const
 		{
 			glm::vec4 color = pContext->skybox->Sample(v.pos.x, v.pos.y, v.pos.z);
 			return color;

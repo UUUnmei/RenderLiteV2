@@ -16,7 +16,7 @@
 class PCSS
 {
 public:
-
+	using UseDerivative = std::false_type;
 	struct VSOut {
 		glm::vec4 proj_pos;
 		glm::vec4 normal;
@@ -264,7 +264,7 @@ public:
 		}
 
 		float visibility;
-		glm::vec4 operator()(const VSOut& v, int modelId, int meshId)
+		glm::vec4 operator()(const VSOut& v, const VSOut& ddx, const VSOut& ddy, int modelId, int meshId)
 		{
 
 			glm::vec4 shadowCoord = v.pos_from_light / v.pos_from_light.w;

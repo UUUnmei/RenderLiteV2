@@ -168,10 +168,122 @@ inline void Pipeline<Shader>::PostProcessTriangle(const VSOut& v0, const VSOut& 
 
 
 template<class Shader>
-
 inline void Pipeline<Shader>::RasterizeTriangle(const VSOut& v0, const VSOut& v1, const VSOut& v2)
 {
-#if 1
+	if constexpr (Shader::UseDerivative::value) {
+		RasterizeWithDerivative(v0, v1, v2);
+	} else {
+		RasterizeBasic(v0, v1, v2);
+	} 
+}
+
+template<class Shader>
+inline void Pipeline<Shader>::RasterizeBasic(const VSOut& v0, const VSOut& v1, const VSOut& v2) {
+	// AABB
+	glm::ivec2 vv0(v0.proj_pos.x + 0.5f, v0.proj_pos.y + 0.5f);
+	glm::ivec2 vv1(v1.proj_pos.x + 0.5f, v1.proj_pos.y + 0.5f);
+	glm::ivec2 vv2(v2.proj_pos.x + 0.5f, v2.proj_pos.y + 0.5f);
+
+	int minx = std::min({ vv0.x, vv1.x, vv2.x });
+	int maxx = std::max({ vv0.x, vv1.x, vv2.x });
+	int miny = std::min({ vv0.y, vv1.y, vv2.y });
+	int maxy = std::max({ vv0.y, vv1.y, vv2.y });
+
+	minx = std::max(0, minx);
+	maxx = std::min(pContext->GetRenderTarget()->GetWidth() - 1, maxx);
+	miny = std::max(0, miny);
+	maxy = std::min(pContext->GetRenderTarget()->GetHeight() - 1, maxy);
+
+	// start process triangle
+	int dy01 = -(vv1.y - vv0.y), dx01 = vv1.x - vv0.x;
+	int dy12 = -(vv2.y - vv1.y), dx12 = vv2.x - vv1.x;
+	int dy20 = -(vv0.y - vv2.y), dx20 = vv0.x - vv2.x;
+
+	int det = dx01 * dy20 - dx20 * dy01;
+	if (det == 0) return;
+	// this renderer actually treats CCW as front face by default
+	// but this orientation produces negative cross product in screen space
+	// and here want to keep consistent with normal Cartesian coordinate
+	// so lets flip it
+	/// backface culling here 
+	/// more accurate while sacrificing a bit of performance than doing it just after MVP
+	if (config.fc_order == ConfigParams::FaceCullOrder::CCW && det > 0) return;
+	if (config.fc_order == ConfigParams::FaceCullOrder::CW && det < 0) return;
+	if (det < 0) {
+		det *= -1;
+		dx01 *= -1;
+		dy01 *= -1;
+		dx12 *= -1;
+		dy12 *= -1;
+		dx20 *= -1;
+		dy20 *= -1;
+	}
+	float _inv = 1.0f / det;
+
+	glm::ivec2 P{ minx, miny };
+
+	int bias0 = IsTopLeft(vv0, vv1) ? 0 : -1;
+	int bias1 = IsTopLeft(vv1, vv2) ? 0 : -1;
+	int bias2 = IsTopLeft(vv2, vv0) ? 0 : -1;
+	// _w0 = cross(vv2 - vv1, P - vv1)
+	int _w0 = dx12 * (P.y - vv1.y) + dy12 * (P.x - vv1.x) + bias1;
+	// _w1 = cross(vv0 - vv2, P - vv2)
+	int _w1 = dx20 * (P.y - vv2.y) + dy20 * (P.x - vv2.x) + bias2;
+	// _w2 = cross(vv1 - vv0, P - vv0)
+	int _w2 = dx01 * (P.y - vv0.y) + dy01 * (P.x - vv0.x) + bias0;
+
+
+	for (P.y = miny; P.y <= maxy; ++P.y) {
+		int w0 = _w0;
+		int w1 = _w1;
+		int w2 = _w2;
+		for (P.x = minx; P.x <= maxx; ++P.x) {
+
+			// if(w0 >= 0 && w1 >= 0 && w2 >= 0) { 
+			if ((w0 | w1 | w2) >= 0) { // take advantage of sign bit in complement representation
+				float lambda0 = w0 * _inv;
+				float lambda1 = w1 * _inv;
+				//float lambda2 = w2 * _inv; // not preferred
+				float lambda2 = 1 - lambda0 - lambda1;
+				//std::cout << lambda0 << ' ' << lambda1 << ' ' << lambda2 << '\n';
+
+				VSOut v2f;
+				v2f.proj_pos.x = P.x + 0.5f;	// gl_fragCoord
+				v2f.proj_pos.y = P.y + 0.5f;
+				v2f.proj_pos.z = v0.proj_pos.z * lambda0 + v1.proj_pos.z * lambda1 + v2.proj_pos.z * lambda2;
+				v2f.proj_pos.w = v0.proj_pos.w * lambda0 + v1.proj_pos.w * lambda1 + v2.proj_pos.w * lambda2;
+
+				if (pContext->GetDepthBufferPointer()->TryUpdate(P.x, P.y, v2f.proj_pos.z)) {
+					float b0 = lambda0 * v0.proj_pos.w;
+					float b1 = lambda1 * v1.proj_pos.w;
+					float b2 = lambda2 * v2.proj_pos.w;
+					float inv = 1.0f / (b0 + b1 + b2);
+					b0 *= inv;
+					b1 *= inv;
+					//b2 *= inv; // seems ok
+					b2 = 1 - b0 - b1;
+					//std::cout << b0 << ' ' << b1 << ' ' << b2 << '\n';
+
+					v2f.Lerp(v0, v1, v2, b0, b1, b2);
+
+					pContext->GetRenderTarget()->write(P.x, P.y, shader.ps(v2f, {}, {}, current_model_id, current_mesh_id));
+
+				} // if nearer
+
+			} // if inside
+
+			w0 += dy12;
+			w1 += dy20;
+			w2 += dy01;
+		} // for x
+		_w0 += dx12;
+		_w1 += dx20;
+		_w2 += dx01;
+	} // for y
+}
+
+template<class Shader>
+inline void Pipeline<Shader>::RasterizeWithDerivative(const VSOut& v0, const VSOut& v1, const VSOut& v2) {
 	// 2*2
 
 	// AABB
@@ -245,14 +357,15 @@ inline void Pipeline<Shader>::RasterizeTriangle(const VSOut& v0, const VSOut& v1
 		for (int x = minx; x <= maxx; x += 2) {
 
 #if 0
+			// seems maintain the performance while can't calculate derivative 
 
-			// if(w0 >= 0 && w1 >= 0 && w2 >= 0) { 
+					// if(w0 >= 0 && w1 >= 0 && w2 >= 0) { 
 			if ((w0.x | w1.x | w2.x) >= 0) { // take advantage of sign bit in complement representation
 				float lambda0 = w0.x * _inv;
 				float lambda1 = w1.x * _inv;
 				//float lambda2 = w2.x * _inv; // not preferred
 				float lambda2 = 1.0f - lambda0 - lambda1;
-			
+
 				VSOut v2f;
 				//v2f.proj_pos.x = P.x + 0.5f;	// gl_fragCoord
 				//v2f.proj_pos.y = P.y + 0.5f;
@@ -272,7 +385,7 @@ inline void Pipeline<Shader>::RasterizeTriangle(const VSOut& v0, const VSOut& v1
 
 					v2f.Lerp(v0, v1, v2, b0, b1, b2);
 
-					pContext->GetRenderTarget()->write(x, y, shader.ps(v2f, current_model_id, current_mesh_id));
+					pContext->GetRenderTarget()->write(x, y, shader.ps(v2f, {}, {}, current_model_id, current_mesh_id));
 
 				} // if nearer
 			} // if inside
@@ -302,7 +415,7 @@ inline void Pipeline<Shader>::RasterizeTriangle(const VSOut& v0, const VSOut& v1
 
 					v2f.Lerp(v0, v1, v2, b0, b1, b2);
 
-					pContext->GetRenderTarget()->write(x + 1, y, shader.ps(v2f, current_model_id, current_mesh_id));
+					pContext->GetRenderTarget()->write(x + 1, y, shader.ps(v2f, {}, {}, current_model_id, current_mesh_id));
 
 				} // if nearer
 			} // if inside
@@ -332,11 +445,11 @@ inline void Pipeline<Shader>::RasterizeTriangle(const VSOut& v0, const VSOut& v1
 
 					v2f.Lerp(v0, v1, v2, b0, b1, b2);
 
-					pContext->GetRenderTarget()->write(x, y + 1, shader.ps(v2f, current_model_id, current_mesh_id));
+					pContext->GetRenderTarget()->write(x, y + 1, shader.ps(v2f, {}, {}, current_model_id, current_mesh_id));
 
 				} // if nearer
 			} // if inside
-			
+
 			if ((w0.w | w1.w | w2.w) >= 0) { // take advantage of sign bit in complement representation
 				float lambda0 = w0.w * _inv;
 				float lambda1 = w1.w * _inv;
@@ -362,13 +475,15 @@ inline void Pipeline<Shader>::RasterizeTriangle(const VSOut& v0, const VSOut& v1
 
 					v2f.Lerp(v0, v1, v2, b0, b1, b2);
 
-					pContext->GetRenderTarget()->write(x + 1, y + 1, shader.ps(v2f, current_model_id, current_mesh_id));
+					pContext->GetRenderTarget()->write(x + 1, y + 1, shader.ps(v2f, {}, {}, current_model_id, current_mesh_id));
 
 				} // if nearer
 			} // if inside
 
-			
 #else
+		// harm the performance while can calculate derivative
+		// maybe need some explicit SIMD?
+
 			VSOut v2f[4];
 
 			glm::vec4 lambda0 = glm::vec4(w0) * _inv;
@@ -394,21 +509,25 @@ inline void Pipeline<Shader>::RasterizeTriangle(const VSOut& v0, const VSOut& v1
 			v2f[2].Lerp(v0, v1, v2, b0.z, b1.z, b2.z);
 			v2f[3].Lerp(v0, v1, v2, b0.w, b1.w, b2.w);
 
+			// four pixels use same ddx/ddy
+			VSOut ddx = v2f[1] + v2f[0] * -1;
+			VSOut ddy = v2f[2] + v2f[0] * -1;
+
 			if ((w0.x | w1.x | w2.x) >= 0
 				&& pContext->GetDepthBufferPointer()->TryUpdate(x, y, v2f[0].proj_pos.z)) {
-				pContext->GetRenderTarget()->write(x, y, shader.ps(v2f[0], current_model_id, current_mesh_id));
+				pContext->GetRenderTarget()->write(x, y, shader.ps(v2f[0], ddx, ddy, current_model_id, current_mesh_id));
 			}
 			if ((w0.y | w1.y | w2.y) >= 0
 				&& pContext->GetDepthBufferPointer()->TryUpdate(x + 1, y, v2f[1].proj_pos.z)) {
-				pContext->GetRenderTarget()->write(x + 1, y, shader.ps(v2f[1], current_model_id, current_mesh_id));
+				pContext->GetRenderTarget()->write(x + 1, y, shader.ps(v2f[1], ddx, ddy, current_model_id, current_mesh_id));
 			}
 			if ((w0.z | w1.z | w2.z) >= 0
 				&& pContext->GetDepthBufferPointer()->TryUpdate(x, y + 1, v2f[2].proj_pos.z)) {
-				pContext->GetRenderTarget()->write(x, y + 1, shader.ps(v2f[2], current_model_id, current_mesh_id));
+				pContext->GetRenderTarget()->write(x, y + 1, shader.ps(v2f[2], ddx, ddy, current_model_id, current_mesh_id));
 			}
 			if ((w0.w | w1.w | w2.w) >= 0
 				&& pContext->GetDepthBufferPointer()->TryUpdate(x + 1, y + 1, v2f[3].proj_pos.z)) {
-				pContext->GetRenderTarget()->write(x + 1, y + 1, shader.ps(v2f[3], current_model_id, current_mesh_id));
+				pContext->GetRenderTarget()->write(x + 1, y + 1, shader.ps(v2f[3], ddx, ddy, current_model_id, current_mesh_id));
 			}
 #endif 
 
@@ -421,109 +540,6 @@ inline void Pipeline<Shader>::RasterizeTriangle(const VSOut& v0, const VSOut& v1
 		_w2 += DX01 * 2;
 	} // for y
 
-#else
-	// AABB
-	glm::ivec2 vv0(v0.proj_pos.x + 0.5f, v0.proj_pos.y + 0.5f);
-	glm::ivec2 vv1(v1.proj_pos.x + 0.5f, v1.proj_pos.y + 0.5f);
-	glm::ivec2 vv2(v2.proj_pos.x + 0.5f, v2.proj_pos.y + 0.5f);
-
-	int minx = std::min({ vv0.x, vv1.x, vv2.x });
-	int maxx = std::max({ vv0.x, vv1.x, vv2.x });
-	int miny = std::min({ vv0.y, vv1.y, vv2.y });
-	int maxy = std::max({ vv0.y, vv1.y, vv2.y });
-
-	minx = std::max(0, minx);
-	maxx = std::min(pContext->GetRenderTarget()->GetWidth() - 1, maxx);
-	miny = std::max(0, miny);
-	maxy = std::min(pContext->GetRenderTarget()->GetHeight() - 1, maxy);
-
-	// start process triangle
-	int dy01 = -(vv1.y - vv0.y), dx01 = vv1.x - vv0.x;
-	int dy12 = -(vv2.y - vv1.y), dx12 = vv2.x - vv1.x;
-	int dy20 = -(vv0.y - vv2.y), dx20 = vv0.x - vv2.x;
-
-	int det = dx01 * dy20 - dx20 * dy01;
-	if (det == 0) return;
-	// this renderer actually treats CCW as front face by default
-	// but this orientation produces negative cross product in screen space
-	// and here want to keep consistent with normal Cartesian coordinate
-	// so lets flip it
-	/// backface culling here 
-	/// more accurate while sacrificing a bit of performance than doing it just after MVP
-	if (config.fc_order == ConfigParams::FaceCullOrder::CCW && det > 0) return; 
-	if (config.fc_order == ConfigParams::FaceCullOrder::CW && det < 0) return;
-	if (det < 0) {
-		det *= -1;
-		dx01 *= -1;
-		dy01 *= -1;
-		dx12 *= -1;
-		dy12 *= -1;
-		dx20 *= -1;
-		dy20 *= -1;
-	}
-	float _inv = 1.0f / det;
-
-	glm::ivec2 P{ minx, miny };
-
-	int bias0 = IsTopLeft(vv0, vv1) ? 0 : -1;
-	int bias1 = IsTopLeft(vv1, vv2) ? 0 : -1;
-	int bias2 = IsTopLeft(vv2, vv0) ? 0 : -1;
-	// _w0 = cross(vv2 - vv1, P - vv1)
-	int _w0 = dx12 * (P.y - vv1.y) + dy12 * (P.x - vv1.x) + bias1;
-	// _w1 = cross(vv0 - vv2, P - vv2)
-	int _w1 = dx20 * (P.y - vv2.y) + dy20 * (P.x - vv2.x) + bias2;
-	// _w2 = cross(vv1 - vv0, P - vv0)
-	int _w2 = dx01 * (P.y - vv0.y) + dy01 * (P.x - vv0.x) + bias0;
-
-
-	for (P.y = miny; P.y <= maxy; ++P.y) {
-		int w0 = _w0;
-		int w1 = _w1;
-		int w2 = _w2;
-		for (P.x = minx; P.x <= maxx; ++P.x) {
-
-			// if(w0 >= 0 && w1 >= 0 && w2 >= 0) { 
-			if ((w0 | w1 | w2) >= 0) { // take advantage of sign bit in complement representation
-				float lambda0 = w0 * _inv;
-				float lambda1 = w1 * _inv;
-				//float lambda2 = w2 * _inv; // not preferred
-				float lambda2 = 1 - lambda0 - lambda1;
-				//std::cout << lambda0 << ' ' << lambda1 << ' ' << lambda2 << '\n';
-
-				VSOut v2f;
-				v2f.proj_pos.x = P.x + 0.5f;	// gl_fragCoord
-				v2f.proj_pos.y = P.y + 0.5f;
-				v2f.proj_pos.z = v0.proj_pos.z * lambda0 + v1.proj_pos.z * lambda1 + v2.proj_pos.z * lambda2;
-				v2f.proj_pos.w = v0.proj_pos.w * lambda0 + v1.proj_pos.w * lambda1 + v2.proj_pos.w * lambda2;
-				
-				if (pContext->GetDepthBufferPointer()->TryUpdate(P.x, P.y, v2f.proj_pos.z)) {
-					float b0 = lambda0 * v0.proj_pos.w;
-					float b1 = lambda1 * v1.proj_pos.w;
-					float b2 = lambda2 * v2.proj_pos.w;
-					float inv = 1.0f / (b0 + b1 + b2);
-					b0 *= inv;
-					b1 *= inv;
-					//b2 *= inv; // seems ok
-					b2 = 1 - b0 - b1;
-					//std::cout << b0 << ' ' << b1 << ' ' << b2 << '\n';
-
-					v2f.Lerp(v0, v1, v2, b0, b1, b2);
-
-					pContext->GetRenderTarget()->write(P.x, P.y, shader.ps(v2f, current_model_id, current_mesh_id));
-				
-				} // if nearer
-
-			} // if inside
-
-			w0 += dy12;
-			w1 += dy20;
-			w2 += dy01;
-		} // for x
-		_w0 += dx12;
-		_w1 += dx20;
-		_w2 += dx01;
-	} // for y
-#endif
 }
 
 
