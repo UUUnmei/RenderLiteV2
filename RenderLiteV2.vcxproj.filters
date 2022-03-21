@@ -102,6 +102,9 @@
     <ClCompile Include="demos\6normalmapping.cpp">
       <Filter>demos</Filter>
     </ClCompile>
+    <ClCompile Include="demos\7mipmap.cpp">
+      <Filter>demos</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Window.h">
@@ -228,6 +231,9 @@
       <Filter>demos</Filter>
     </ClInclude>
     <ClInclude Include="demos\6normalmapping.h">
+      <Filter>demos</Filter>
+    </ClInclude>
+    <ClInclude Include="demos\7mipmap.h">
       <Filter>demos</Filter>
     </ClInclude>
   </ItemGroup>

@@ -184,6 +184,7 @@
     <ClCompile Include="demos\4pointlightshadow.cpp" />
     <ClCompile Include="demos\5pcss.cpp" />
     <ClCompile Include="demos\6normalmapping.cpp" />
+    <ClCompile Include="demos\7mipmap.cpp" />
     <ClCompile Include="DepthBuffer.cpp" />
     <ClCompile Include="DirectionalLight.cpp" />
     <ClCompile Include="FPSCamera.cpp" />
@@ -214,6 +215,7 @@
     <ClInclude Include="demos\4pointlightshadow.h" />
     <ClInclude Include="demos\5pcss.h" />
     <ClInclude Include="demos\6normalmapping.h" />
+    <ClInclude Include="demos\7mipmap.h" />
     <ClInclude Include="DepthBuffer.h" />
     <ClInclude Include="DirectionalLight.h" />
     <ClInclude Include="FPSCamera.h" />

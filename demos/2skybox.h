@@ -3,7 +3,6 @@
 #include "../SceneBase.h"
 #include "../Pipeline.h"
 #include "../NormalShader.hpp"
-#include "../DiffuseShader.hpp"
 #include "../SkyboxShader.hpp"
 #include "../OrbitCamera.h"
 
@@ -11,7 +10,6 @@
 class SceneSkybox final : public SceneBase {
 private:
 	Pipeline<NormalShader> nrender;
-	Pipeline<DiffuseShader> drender;
 	Pipeline<SkyboxShader> skyrender;
 	std::shared_ptr<SceneContext> context;
 
