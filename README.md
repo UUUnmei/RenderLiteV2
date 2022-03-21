@@ -5,7 +5,7 @@ with a more powerful architecture(than [version 1](https://github.com/UUUnmei/Re
 implement some basic technique
 
 ## Features
-- programmable pipeline
+- programmable pipeline(and can rasterize 2*2 quad at a time)
 - perspective correct
 - directional light
 - point light (with **omnidirectional shadow!**)
@@ -18,7 +18,7 @@ implement some basic technique
 - fps camera
 - tangent space calculation
 - mouse/keyboard input callbacks (thanks to glfw)
-- mipmap (but not used in practice because of partial derivative)
+- basic mipmap support
 
 ## Some implemented technique
 > mainly in *Shader.hpp
@@ -28,10 +28,10 @@ implement some basic technique
 - skybox
 - normal mapping, parallax papping
 - blinn-phong shading
-- an experimental partial derivative calculating(e.g. ddx/ddy in HLSL) for mipmap (see test_mipmap branch for detail，a little different from GPU result)
+- derivative calculation(e.g. ddx/ddy in HLSL) for mipmap. In master branch, it comes from difference of neighbouring pixels. In test_mipmap branch, it comes from some kind of analytical solutions.
 
 ## TODO
-- [ ] update pipeline (greatly inspired by [this](https://fgiesen.wordpress.com/2013/02/10/optimizing-the-basic-rasterizer/) and related series)
+- [x] update pipeline (greatly inspired by [this](https://fgiesen.wordpress.com/2013/02/10/optimizing-the-basic-rasterizer/) and related series)
 - [ ] refactor texture and material (for flexibility)
 - [ ] tiled based (for performance and try multi-thread)
 
@@ -83,3 +83,13 @@ PCSS
 normal mapping
 ![](https://s2.loli.net/2022/03/02/k39UlDeo1j6msz5.png)
 ![](https://s2.loli.net/2022/03/02/TEzCu4jke8gIso1.png)
+
+mipmap(master)
+![](https://s2.loli.net/2022/03/21/O6aizCUypIRck1l.png)
+![](https://s2.loli.net/2022/03/21/mCSGgxrBh4t8Aos.png)
+![](https://s2.loli.net/2022/03/21/VNfS5evrUoXkOFz.png)
+
+mipmap(test_mipmap)
+![](https://s2.loli.net/2022/03/21/NmKQwlJk43B5Gxn.png)
+![](https://s2.loli.net/2022/03/21/q4kwJFgsnyLd7P5.png)
+![](https://s2.loli.net/2022/03/21/FzDo2h7HixLyNEY.png)
